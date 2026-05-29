@@ -28,10 +28,8 @@ export interface Report {
   category: ReportCategory;
   status: ReportStatus;
   location: {
-    coordinates: {
-      latitude: number;
-      longitude: number;
-    };
+    latitude: number;
+    longitude: number;
     address?: string;
     ward?: string;
     city?: string;

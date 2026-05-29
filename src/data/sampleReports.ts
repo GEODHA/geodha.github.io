@@ -18,10 +18,8 @@ export const sampleReports = [
     category: 'garbage',
     status: 'pending',
     location: {
-      coordinates: {
-        latitude: 12.9716,
-        longitude: 77.5946
-      },
+      latitude: 12.9716,
+      longitude: 77.5946,
       address: '1st Block, Jayanagar, Bengaluru, Karnataka',
       ward: 'Jayanagar',
       city: 'Bengaluru',
@@ -48,10 +46,8 @@ export const sampleReports = [
     category: 'sewage',
     status: 'verified',
     location: {
-      coordinates: {
-        latitude: 12.9822,
-        longitude: 77.5982
-      },
+      latitude: 12.9822,
+      longitude: 77.5982,
       address: 'BTM Layout, Bengaluru, Karnataka',
       ward: 'BTM Layout',
       city: 'Bengaluru',
@@ -78,10 +74,8 @@ export const sampleReports = [
     category: 'burning',
     status: 'resolved',
     location: {
-      coordinates: {
-        latitude: 12.9698,
-        longitude: 77.6100
-      },
+      latitude: 12.9698,
+      longitude: 77.6100,
       address: 'HSR Layout, Bengaluru, Karnataka',
       ward: 'HSR Layout',
       city: 'Bengaluru',
@@ -107,10 +101,8 @@ export const sampleReports = [
     category: 'construction',
     status: 'pending',
     location: {
-      coordinates: {
-        latitude: 12.9644,
-        longitude: 77.5937
-      },
+      latitude: 12.9644,
+      longitude: 77.5937,
       address: 'Koramangala, Bengaluru, Karnataka',
       ward: 'Koramangala',
       city: 'Bengaluru',
@@ -137,10 +129,8 @@ export const sampleReports = [
     category: 'pollution',
     status: 'verified',
     location: {
-      coordinates: {
-        latitude: 12.9580,
-        longitude: 77.6413
-      },
+      latitude: 12.9701,
+      longitude: 77.5995,
       address: 'Whitefield, Bengaluru, Karnataka',
       ward: 'Whitefield',
       city: 'Bengaluru',
@@ -167,10 +157,8 @@ export const sampleReports = [
     category: 'other',
     status: 'archived',
     location: {
-      coordinates: {
-        latitude: 12.9141,
-        longitude: 77.6103
-      },
+      latitude: 12.9141,
+      longitude: 77.6103,
       address: 'Jayanagar 4th Block, Bengaluru, Karnataka',
       ward: 'Jayanagar',
       city: 'Bengaluru',
@@ -196,12 +184,9 @@ export const convertToFirestoreFormat = (report: any) => ({
   ...report,
   location: {
     ...report.location,
-    coordinates: {
-      latitude: report.location.coordinates.latitude,
-      longitude: report.location.coordinates.longitude,
-      _lat: report.location.coordinates.latitude,
-      _long: report.location.coordinates.longitude
-    }
+    // Firestore stores GeoPoint as latitude and longitude at top level
+    _lat: report.location.latitude,
+    _long: report.location.longitude
   }
 });
 

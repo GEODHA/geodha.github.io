@@ -159,15 +159,20 @@ const MapReports = () => {
   // Memoize expensive computations
   const mapReports: MapReport[] = useMemo(() =>
     filteredReports
-      .filter(report =>
-        report.location?.coordinates?.latitude &&
-        report.location?.coordinates?.longitude &&
-        !isNaN(report.location.coordinates.latitude) &&
-        !isNaN(report.location.coordinates.longitude)
-      )
       .map(report => ({
+        report,
+        latitude: report.location?.latitude,
+        longitude: report.location?.longitude,
+      }))
+      .filter(({ latitude, longitude }) =>
+        latitude != null &&
+        longitude != null &&
+        !isNaN(latitude) &&
+        !isNaN(longitude)
+      )
+      .map(({ report, latitude, longitude }) => ({
         id: report.id!,
-        position: [report.location.coordinates.latitude, report.location.coordinates.longitude],
+        position: [latitude, longitude],
         title: report.title,
         category: report.category,
         status: report.status as 'pending' | 'verified' | 'resolved' | 'archived',
@@ -179,6 +184,30 @@ const MapReports = () => {
       })),
     [filteredReports]
   );
+
+  // Memoize expensive computations
+  // const mapReports: MapReport[] = useMemo(() =>
+  //   filteredReports
+  //     .filter(report =>
+  //       report.location?.coordinates?.latitude &&
+  //       report.location?.coordinates?.longitude &&
+  //       !isNaN(report.location.coordinates.latitude) &&
+  //       !isNaN(report.location.coordinates.longitude)
+  //     )
+  //     .map(report => ({
+  //       id: report.id!,
+  //       position: [report.location.coordinates.latitude, report.location.coordinates.longitude],
+  //       title: report.title,
+  //       category: report.category,
+  //       status: report.status as 'pending' | 'verified' | 'resolved' | 'archived',
+  //       description: report.description,
+  //       photos: report.photos,
+  //       endorsementCount: report.endorsementCount,
+  //       ward: report.location.ward || report.location.address?.split(',')[0], // Extract ward from address
+  //       createdAt: report.createdAt.toDate().toISOString(),
+  //     })),
+  //   [filteredReports]
+  // );
 
 
   // Memoized callback for report click handling
@@ -301,7 +330,7 @@ const MapReports = () => {
       )}
       
       <div className="container px-4 py-8 space-y-6">
-        {reports.length > 0 ? <Dashboard reports={reports} allowCustomDateRange={true} /> : null}
+        {/*                                      */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">Community Reports & Map</h1>
