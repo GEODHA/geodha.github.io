@@ -13,8 +13,8 @@ import About from "./pages/About";
 import GetStarted from "./pages/GetStarted";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Navigation from "./components/Navigation";
-import TopBanner from "./components/TopBanner";
 import Footer from "./components/Footer";
+import { I18nProvider } from "./i18n";
 import NotFound from "./pages/NotFound";
 import WasteGuide from "./pages/WasteGuide";
 import BWGGuidePage from "./pages/BWGGuidePage";
@@ -87,15 +87,10 @@ function LegacyMapRedirect() {
   return <Navigate to="/dashboard" replace state={state} />;
 }
 
-/** Renders children only on the home page — used to gate the TopBanner. */
-function ShowOnHome({ children }: { children: React.ReactNode }) {
-  const { pathname } = useLocation();
-  return pathname === "/" ? <>{children}</> : null;
-}
-
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
+      <I18nProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -118,7 +113,6 @@ const App = () => {
               {/* ── Public routes (with Navigation + Footer) ──── */}
               <Route path="*" element={
                 <div className="min-h-screen bg-background">
-                  <ShowOnHome><TopBanner /></ShowOnHome>
                   <Navigation />
                   <Routes>
                     <Route path="/"          element={<Index />} />
@@ -143,6 +137,7 @@ const App = () => {
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>
+      </I18nProvider>
     </QueryClientProvider>
   );
 };

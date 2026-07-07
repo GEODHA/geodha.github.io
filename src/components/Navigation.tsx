@@ -1,23 +1,24 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Menu, X, ChevronDown, Languages, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import logoSvg from '@/assets/LOGO_SVG.svg';
-
-const navigationItems = [
-  { path: '/',          label: 'Home' },
-  { path: '/dashboard', label: 'Dashboard' },
-  { path: '/data',      label: 'Data' },
-  { path: '/blog',      label: 'Blog' },
-  { path: '/about',     label: 'About' },
-];
+import { useI18n, LOCALES } from '@/i18n';
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
+  const { t, locale, setLocale } = useI18n();
+
+  const navigationItems = [
+    { path: '/',          label: t.nav.home },
+    { path: '/dashboard', label: t.nav.dashboard },
+    { path: '/data',      label: t.nav.data },
+    { path: '/blog',      label: t.nav.blog },
+    { path: '/about',     label: t.nav.about },
+  ];
 
   const handleNavigation = (path: string) => {
     setIsMobileMenuOpen(false);
@@ -26,7 +27,7 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="sticky top-0 z-[2000] w-full border-b border-border bg-white shadow-sm">
+    <nav className="sticky top-0 z-[2000] w-full bg-paper border-b-[3px] border-ink">
       <div className="container flex h-16 items-center gap-2 sm:gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center shrink-0 group" onClick={() => window.scrollTo(0, 0)}>
@@ -39,25 +40,25 @@ const Navigation = () => {
           />
         </Link>
 
-        {/* City & Language selectors — visible on all screen sizes */}
+        {/* City & Language selectors */}
         <div className="flex items-center gap-1 ml-1">
           {/* City selector */}
           <div className="relative group">
-            <button className="flex items-center gap-1 text-sm font-medium text-foreground/70 hover:text-foreground px-2 py-1 rounded transition-colors">
+            <button className="flex items-center gap-1 text-sm font-bold text-foreground/70 hover:text-foreground px-2 py-1 rounded transition-colors">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden xs:inline sm:inline">Bengaluru</span>
+              <span className="hidden xs:inline sm:inline">{t.nav.city}</span>
               <ChevronDown className="h-3 w-3" />
             </button>
-            <div className="absolute top-full left-0 mt-1 w-48 rounded-md border border-border bg-white shadow-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+            <div className="absolute top-full left-0 mt-2 w-52 rounded-xl border-2 border-ink bg-paper opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50" style={{ boxShadow: 'var(--shadow-offset-3)' }}>
               <div className="p-2">
-                <div className="px-3 py-2 text-sm text-foreground font-medium rounded bg-muted">Bengaluru</div>
+                <div className="px-3 py-2 text-sm font-bold rounded-lg bg-tint-green">{t.nav.city}</div>
                 <a
                   href="https://forms.gle/K3GGQdBe5k2uH44f7"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+                  className="block px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                 >
-                  Other cities - sign up.
+                  {t.nav.otherCities}
                 </a>
               </div>
             </div>
@@ -65,17 +66,29 @@ const Navigation = () => {
 
           <div className="w-px h-4 bg-border" />
 
-          {/* Language selector */}
+          {/* Language selector — functional (English / ಕನ್ನಡ) */}
           <div className="relative group">
-            <button className="flex items-center gap-1.5 text-sm font-medium text-foreground/70 hover:text-foreground px-2 py-1 rounded transition-colors" aria-label="Select language">
+            <button className="flex items-center gap-1.5 text-sm font-bold text-foreground/70 hover:text-foreground px-2 py-1 rounded transition-colors" aria-label={t.nav.language}>
               <Languages className="h-4 w-4" />
+              <span className="hidden sm:inline text-xs font-mono font-bold uppercase">{locale}</span>
               <ChevronDown className="h-3 w-3" />
             </button>
-            <div className="absolute top-full left-0 mt-1 w-44 rounded-md border border-border bg-white shadow-md opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
+            <div className="absolute top-full left-0 mt-2 w-44 rounded-xl border-2 border-ink bg-paper opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50" style={{ boxShadow: 'var(--shadow-offset-3)' }}>
               <div className="p-2">
-                <div className="px-3 py-2 text-sm text-foreground font-medium rounded bg-muted">English</div>
-                <div className="px-3 py-2 text-sm text-muted-foreground/50 cursor-not-allowed">ಕನ್ನಡ <span className="text-xs">(coming soon)</span></div>
-                <div className="px-3 py-2 text-sm text-muted-foreground/50 cursor-not-allowed">हिन्दी <span className="text-xs">(coming soon)</span></div>
+                {LOCALES.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => setLocale(l.code)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                      locale === l.code
+                        ? 'font-bold bg-tint-green'
+                        : 'font-medium text-muted-foreground hover:text-foreground hover:bg-muted'
+                    )}
+                  >
+                    {l.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -88,10 +101,10 @@ const Navigation = () => {
               key={item.path}
               onClick={() => handleNavigation(item.path)}
               className={cn(
-                'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                'px-4 py-1.5 text-sm font-bold rounded-full transition-colors border-2',
                 currentPath === item.path
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-foreground/70 hover:text-foreground hover:bg-muted'
+                  ? 'border-ink bg-tint-green text-foreground'
+                  : 'border-transparent text-foreground/70 hover:text-foreground hover:bg-muted'
               )}
             >
               {item.label}
@@ -99,20 +112,20 @@ const Navigation = () => {
           ))}
         </div>
 
-        {/* Report a Problem CTA — desktop only */}
+        {/* CTA — yellow poster pill, desktop only */}
         <div className="hidden md:flex items-center ml-auto">
           <button
             onClick={() => handleNavigation('/report')}
-            className="px-4 py-2 text-sm font-semibold text-white rounded-md shadow-none transition-opacity hover:opacity-90"
-            style={{ background: 'var(--gradient-hero)' }}
+            className="px-5 py-2 text-sm font-extrabold rounded-full border-[2.5px] border-ink bg-secondary text-secondary-foreground transition-transform active:translate-x-[2px] active:translate-y-[2px]"
+            style={{ boxShadow: 'var(--shadow-offset-3)' }}
           >
-            Submit Report
+            {t.common.submitReport}
           </button>
         </div>
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden ml-auto p-2 rounded-md text-foreground/70 hover:text-foreground hover:bg-muted"
+          className="md:hidden ml-auto p-2 rounded-lg border-2 border-ink text-foreground"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle menu"
         >
@@ -122,16 +135,16 @@ const Navigation = () => {
 
       {/* Mobile menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-white">
+        <div className="md:hidden border-t-2 border-ink bg-paper">
           <div className="container py-4 flex flex-col gap-1">
             {navigationItems.map((item) => (
               <button
                 key={item.path}
                 onClick={() => handleNavigation(item.path)}
                 className={cn(
-                  'text-left px-4 py-3 rounded-md text-sm font-medium transition-colors',
+                  'text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors',
                   currentPath === item.path
-                    ? 'bg-primary/10 text-primary'
+                    ? 'bg-tint-green border-2 border-ink'
                     : 'text-foreground/70 hover:text-foreground hover:bg-muted'
                 )}
               >
@@ -140,10 +153,10 @@ const Navigation = () => {
             ))}
             <button
               onClick={() => handleNavigation('/report')}
-              className="mt-2 px-4 py-2.5 text-sm font-semibold text-white rounded-md w-full text-left hover:opacity-90 transition-opacity"
-              style={{ background: 'var(--gradient-hero)' }}
+              className="mt-2 px-4 py-3 text-sm font-extrabold rounded-full border-[2.5px] border-ink bg-secondary text-secondary-foreground w-full text-center"
+              style={{ boxShadow: 'var(--shadow-offset-3)' }}
             >
-              Report a Problem
+              {t.common.submitReport}
             </button>
           </div>
         </div>

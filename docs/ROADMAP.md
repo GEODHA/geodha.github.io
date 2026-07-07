@@ -163,6 +163,17 @@ is already hard-coded in `Hero.tsx`; App Store URL unknown).
 
 ### 4a. HOMEPAGE BLUEPRINT (from Pratul's "Option 1A · Street Poster" mockups, 2026-07-07)
 
+> STATUS 2026-07-07 (later session): BUILT — Index.tsx fully rewritten per this
+> blueprint (i18n-enabled); Navigation + Footer restyled (poster chrome, ink
+> footer band); StoreButtons → black poster tiles; TopBanner + ScrollingBanner
+> deleted (redundant); .bg-stripes-yellow/.bg-blueprint utilities added; stats
+> honest & configurable via STATS const in Index.tsx (users placeholder "100+"
+> — TODO wire real count). FourElements on About rebuilt as "drag to restore"
+> reveal cards (reality⇄ideal wipe, red/green status pill), using old image
+> sets 2 (ideal) & 3 (reality); set 1 images now unused.
+> REMAINING per-page propagation: About (rest), Data, Report, Guides,
+> Volunteer, Dashboard chrome, Blog frame + items 2–4 below.
+
 Rebuild `Index.tsx` (+ Navigation/Footer) to match the mockups. The mockup
 content is PLACEHOLDER — real-content mapping decided below. Reuse the
 foundation utilities (.card-poster/.btn-poster/.chip-poster/.mono-label).
@@ -236,6 +247,17 @@ Kit summary (extracted 2026-07-07):
 - Do NOT restructure components during redesign (refactor is a separate session).
 
 ## 5. Multi-language support & Kannada (Sonnet, after redesign)
+
+> STATUS 2026-07-07 (later session): FOUNDATION DONE. Custom lightweight typed
+> i18n (src/i18n/: index.tsx provider + en.ts + kn.ts) — NO external deps
+> (chosen over react-i18next to avoid npm-install friction; locale files are
+> shaped for easy migration if ever needed). Working language switcher in
+> Navigation (English/ಕನ್ನಡ, persisted to localStorage, sets <html lang>, fires
+> GA language_change). Translated: nav, footer, homepage, StoreButtons.
+> Kannada is machine-drafted — NEEDS NATIVE-SPEAKER REVIEW (noted in kn.ts).
+> REMAINING: extend Dict + translations to Dashboard (incl. severity BAND
+> labels), About, Guides, Report, Data, Volunteer; Hindi later by adding hi.ts;
+> per-route titles in App.tsx ROUTE_TITLES could also localize.
 
 1. Stack: `react-i18next` + `i18next-browser-languagedetector`. No URL prefixing
    (GH Pages SPA); persist choice in localStorage; `<html lang>` sync.
