@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 
 // ── Org data ──────────────────────────────────────────────────────────────────
 
@@ -106,11 +105,6 @@ function ActionBtn({ action }: { action: OrgAction }) {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export default function VolunteerPage() {
-  useEffect(() => {
-    document.title = 'Volunteer for Cleanups — GEODHA';
-    return () => { document.title = 'GEODHA'; };
-  }, []);
-
   return (
     <div className="min-h-screen bg-background">
 

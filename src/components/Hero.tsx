@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Camera, MapPin, Users, CheckCircle } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
-import androidIcon from "@/assets/icons/android-play.svg";
+import StoreButtons from "@/components/StoreButtons";
 // import { useFetchReports } from "@/hooks/useFetchReports";
 // import ChartsPanel from "@/components/ChartsPanel"; // formerly pages/Dashboard.tsx
 
@@ -36,23 +36,9 @@ const Hero = () => {
                 <MapPin className="h-5 w-5 mr-2" />
                 View Map
               </Button>
-              <Button
-                variant="default"
-                size="lg"
-                className="flex-1 sm:flex-none py-4 sm:py-3 bg-black text-white hover:bg-black/90"
-                onClick={() => {
-                  window.open(
-                    'https://play.google.com/store/apps/details?id=com.geodha.community',
-                    '_blank',
-                    'noopener,noreferrer'
-                  );
-                }}
-                aria-label="Download Reporting App from Google Play"
-              >
-                <img src={androidIcon} alt="Google Play" className="h-5 w-5" />
-                Download Reporting App
-              </Button>
             </div>
+
+            <StoreButtons placement="hero" />
 
             {/* 
             <div className="grid grid-cols-3 gap-8 </p>pt-8">

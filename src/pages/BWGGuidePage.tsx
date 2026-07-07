@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 // ── Colour tokens ─────────────────────────────────────────────────────────────
@@ -138,12 +137,10 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function BWGGuidePage() {
-  useEffect(() => {
-    document.title = 'BWG Disposal Guidelines — GEODHA';
-    return () => { document.title = 'GEODHA'; };
-  }, []);
+// Sections pending bylaw finalisation — flip to true to re-enable.
+const SHOW_PENDING_SECTIONS = false as boolean;
 
+export default function BWGGuidePage() {
   return (
     <div style={{ background: C.bg, color: C.text, fontFamily: "'Inter', sans-serif", fontSize: 15, lineHeight: 1.6 }} className="min-h-screen">
 
@@ -261,7 +258,7 @@ export default function BWGGuidePage() {
       </section>
 
       {/* ── DISABLED SECTIONS (pending bylaw finalisation) ─────────────────── */}
-      {false && (
+      {SHOW_PENDING_SECTIONS && (
         <>
           {/* ── OBLIGATIONS ── */}
           <section style={{ borderBottom: `1px solid ${C.border}` }} className="py-14">

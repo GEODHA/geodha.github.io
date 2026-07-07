@@ -11,7 +11,8 @@ import {
   limit,
   GeoPoint,
   Timestamp,
-  increment
+  increment,
+  QueryConstraint,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage, ensureAuth } from '@/lib/firebase';
@@ -151,7 +152,7 @@ export default class ReportsService {
       await ensureAuth();
       
       const { authorId, category, status, limit: limitCount } = filters;
-      let constraints: any[] = [orderBy('createdAt', 'desc')];
+      const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
 
       if (authorId) {
         constraints.push(where('authorId', '==', authorId));

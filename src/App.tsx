@@ -34,10 +34,35 @@ const queryClient = new QueryClient();
 // Teach TypeScript about the gtag global injected by index.html
 declare function gtag(...args: unknown[]): void;
 
-/** Fires a GA4 page_view event on every React Router navigation. */
+// ── Per-route document titles ─────────────────────────────────────────────────
+// index.html configures gtag with `send_page_view: false`, so RouteTracker is
+// the single source of page_view events — and it sets the title first so GA4
+// reports differentiate pages by title (they previously all shared the static
+// index.html title).
+
+const DEFAULT_TITLE = 'GEODHA — See garbage around you? Solve it with GEODHA.';
+
+const ROUTE_TITLES: Record<string, string> = {
+  '/':            DEFAULT_TITLE,
+  '/dashboard':   'Bengaluru Garbage Crisis Map — GEODHA',
+  '/data':        'Data — GEODHA',
+  '/report':      'Report an Issue — GEODHA',
+  '/blog':        'Blog — GEODHA',
+  '/about':       'About — GEODHA',
+  '/privacy':     'Privacy Policy — GEODHA',
+  '/get-started': 'Get Started — GEODHA',
+  '/guide':       'Waste Guide — GEODHA',
+  '/guide2':      'BWG Disposal Guidelines — GEODHA',
+  '/volunteer':   'Volunteer for Cleanups — GEODHA',
+};
+
+/** Sets the per-route title, then fires a GA4 page_view on every navigation. */
 function RouteTracker() {
   const { pathname } = useLocation();
   useEffect(() => {
+    document.title =
+      ROUTE_TITLES[pathname] ??
+      (pathname.startsWith('/admin') ? 'Admin — GEODHA' : DEFAULT_TITLE);
     if (typeof gtag === 'undefined') return;
     gtag('event', 'page_view', {
       page_path:  pathname,

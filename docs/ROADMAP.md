@@ -105,6 +105,15 @@ After EACH step: Pratul runs `npm run build` + spot-checks `npm run dev`.
 
 ## 3. App Store & Play Store links + UI (Sonnet)
 
+> STATUS 2026-07-07: core DONE (Fable session). `src/config/appLinks.ts`
+> (PLAY_STORE_URL + IOS_APP_URL — currently TestFlight beta:
+> https://testflight.apple.com/join/aU7jw7nW, flip IOS_IS_TESTFLIGHT when the
+> public App Store listing ships). New `StoreButtons` component (with
+> store_click GA events) used in Hero; Footer has both store links.
+> REMAINING: official store badge assets (do during redesign, §4); add
+> StoreButtons to GetStarted when that page's content is written; consider
+> OS-detecting smart link for shares.
+
 App is now live on both stores. Get the final URLs from Pratul first
 (Play: `https://play.google.com/store/apps/details?id=com.geodha.community`
 is already hard-coded in `Hero.tsx`; App Store URL unknown).
@@ -164,6 +173,14 @@ Kit summary (extracted 2026-07-07):
 7. GA: `gtag('event', 'language_change', { lang })`.
 
 ## 6. Google Analytics refinement (Sonnet)
+
+> STATUS 2026-07-07: core fix DONE (Fable session). `send_page_view: false` in
+> index.html; RouteTracker in App.tsx now owns document.title via ROUTE_TITLES
+> map (per-page title effects removed from BWGGuidePage/VolunteerPage/WasteGuide);
+> new `src/lib/analytics.ts` trackEvent helper; events wired: ward_selected,
+> report_pin_tap, share_click (ward + dashboard), store_click (hero).
+> REMAINING: verify in GA4 DebugView; add language_change (§5) and more
+> store_click placements (§3) when those features land.
 
 Current state: gtag loaded in `index.html`; `RouteTracker` in `App.tsx` fires a
 `page_view` on every route change with `page_title: document.title`.

@@ -179,15 +179,5 @@ export const sampleReports = [
   }
 ];
 
-// Function to convert sample data to proper Firestore format
-export const convertToFirestoreFormat = (report: any) => ({
-  ...report,
-  location: {
-    ...report.location,
-    // Firestore stores GeoPoint as latitude and longitude at top level
-    _lat: report.location.latitude,
-    _long: report.location.longitude
-  }
-});
 
 export default sampleReports;

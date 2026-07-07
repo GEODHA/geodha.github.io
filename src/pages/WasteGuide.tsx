@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 // ── Colour tokens (matching GEODHA + guide palette) ───────────────────────────
@@ -397,11 +397,6 @@ export default function WasteGuide() {
     red:   { bg: C.redLight,   color: C.red },
     black: { bg: C.blackLight, color: C.black },
   };
-
-  useEffect(() => {
-    document.title = 'Waste Guide — GEODHA';
-    return () => { document.title = 'GEODHA'; };
-  }, []);
 
   const FILTER_BTNS: { label: string; value: FilterCat }[] = [
     { label: 'All', value: 'all' },

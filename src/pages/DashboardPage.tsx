@@ -22,6 +22,7 @@ import { ThumbsUp } from 'lucide-react';
 
 // ── Shared ward-boundary geometry helpers ─────────────────────────────────────
 import { ZONE_LOOKUP, WARD_CENTROIDS, findWardForPoint } from '@/lib/geo';
+import { trackEvent } from '@/lib/analytics';
 
 // ── Firebase hooks ────────────────────────────────────────────────────────────
 import { useWardStats }            from '@/hooks/useWardStats';
@@ -310,6 +311,7 @@ function WardSheet({ data, zone, scales, actions, allTestimonials, onClose }: Wa
   useEffect(() => { setActiveCategory(null); }, [data.ward_num]);
 
   const handleShare = async () => {
+    trackEvent('share_click', { target: 'ward', ward_num: data.ward_num });
     const url  = `${window.location.origin}/dashboard?ward=${data.ward_num}`;
     const text = `📍 ${data.ward_name} (BBMP Ward ${data.ward_num}) — see garbage-related issues reported in this ward on GEODHA`;
     if (navigator.share) {
@@ -884,6 +886,7 @@ const DashboardPage = () => {
     setSelectedReport(null);
     setSelectedWard({ num: wardNum, data, zone });
     setSheetOpen(true);
+    trackEvent('ward_selected', { ward_num: wardNum });
   };
 
   const handleSearchSelect = (wardNum: number, data: WardData, zone: string) => {
@@ -899,6 +902,7 @@ const DashboardPage = () => {
     setSelectedWard(null);
     setSelectedReport(report);
     setSheetOpen(true);
+    trackEvent('report_pin_tap', { report_id: reportId, category: report.category });
   };
 
   const handleClose = () => {
@@ -955,6 +959,7 @@ const DashboardPage = () => {
 
   // ── Dashboard share ───────────────────────────────────────────────────────
   const shareDashboard = async () => {
+    trackEvent('share_click', { target: 'dashboard' });
     const url  = `${window.location.origin}/dashboard`;
     const text = `🗺️ See Bengaluru's ward-by-ward garbage problem map. Find your area and see what residents can do about it →`;
     if (navigator.share) {

@@ -1,3 +1,4 @@
+import { PLAY_STORE_URL, IOS_APP_URL } from '@/config/appLinks';
 import { Link } from 'react-router-dom';
 import { Mail, Linkedin, Instagram, MessageSquare } from 'lucide-react';
 import logoSvg from '@/assets/LOGO_SVG.svg';
@@ -116,13 +117,13 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a
-                  href="https://play.google.com/store/apps/details?id=com.geodha.community"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary transition-colors"
-                >
-                  Download App
+                <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  Android App — Google Play
+                </a>
+              </li>
+              <li>
+                <a href={IOS_APP_URL} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">
+                  iOS Beta — TestFlight
                 </a>
               </li>
             </ul>
