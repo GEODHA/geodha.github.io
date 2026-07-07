@@ -373,13 +373,6 @@ export async function uploadTestimonialImage(
   const origRef     = ref(storage, origPath);
   const thumbRef    = ref(storage, thumbPath);
 
-  const { currentUser } = (await import('../lib/firebase')).auth;
-  console.group('📤 uploadTestimonialImage');
-  console.log('bucket :', storage.app.options.storageBucket);
-  console.log('path   :', origPath);
-  console.log('auth uid:', currentUser?.uid ?? '⚠️  NOT SIGNED IN');
-  console.log('file   :', file.name, `(${(file.size / 1024).toFixed(1)} KB)`);
-  console.groupEnd();
 
   const TIMEOUT_MS = 30_000;
 
@@ -395,7 +388,6 @@ export async function uploadTestimonialImage(
       getDownloadURL(origSnap.ref),
       getDownloadURL(thumbSnap.ref),
     ]);
-    console.log('✅ upload succeeded (original + thumbnail)');
     return { url, thumbUrl };
   };
 

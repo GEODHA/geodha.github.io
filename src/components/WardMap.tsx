@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 import wardBoundaries from '../../data/ward-boundaries.json';
+import { outerRing, ringCentroid, featureBounds } from '@/lib/geo';
 import { computeScale, BAND } from '@/lib/severity';
 import type { BandLevel } from '@/lib/severity';
 import AppReportsLayer, { APP_REPORTS_PANE } from './AppReportsLayer';
@@ -181,36 +182,6 @@ function ZoomController({ wardNum }: { wardNum: number }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wardNum]);
   return null;
-}
-
-// ── Geometry helpers ──────────────────────────────────────────────────────────
-
-function ringCentroid(ring: number[][]): [number, number] {
-  let sumLon = 0, sumLat = 0;
-  for (const [lon, lat] of ring) { sumLon += lon; sumLat += lat; }
-  return [sumLat / ring.length, sumLon / ring.length];
-}
-
-function outerRing(geometry: GeoJSON.Geometry): number[][] {
-  if (geometry.type === 'Polygon')      return geometry.coordinates[0] as number[][];
-  if (geometry.type === 'MultiPolygon') {
-    const polys = geometry.coordinates as number[][][][];
-    const best  = polys.reduce((a, b) => (a[0].length >= b[0].length ? a : b));
-    return best[0] as number[][];
-  }
-  return [];
-}
-
-function featureBounds(geometry: GeoJSON.Geometry): L.LatLngBounds | null {
-  let pts: number[][] = [];
-  if (geometry.type === 'Polygon')      pts = geometry.coordinates[0] as number[][];
-  else if (geometry.type === 'MultiPolygon') {
-    for (const poly of geometry.coordinates as number[][][][]) pts = pts.concat(poly[0] as number[][]);
-  }
-  if (pts.length === 0) return null;
-  const lats = pts.map(([, lat]) => lat);
-  const lons = pts.map(([lon])   => lon);
-  return L.latLngBounds([[Math.min(...lats), Math.min(...lons)], [Math.max(...lats), Math.max(...lons)]]);
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────

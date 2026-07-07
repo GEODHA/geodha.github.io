@@ -3,7 +3,7 @@ import { Camera, MapPin, Users, CheckCircle } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import androidIcon from "@/assets/icons/android-play.svg";
 // import { useFetchReports } from "@/hooks/useFetchReports";
-// import Dashboard from "@/pages/Dashboard";
+// import ChartsPanel from "@/components/ChartsPanel"; // formerly pages/Dashboard.tsx
 
 const Hero = () => {
   // const { reports, loading, error } = useFetchReports(false);
@@ -110,7 +110,7 @@ const Hero = () => {
         </div>
         {/* {!loading && reports.length > 0 ?
           <div className="mt-10 rounded-lg border bg-card p-6">
-            <Dashboard reports={reports} allowCustomDateRange={false} />
+            <ChartsPanel reports={reports} allowCustomDateRange={false} />
           </div>
           : null} */}
         {/* Beta testing text - visible on mobile only, below the image */}

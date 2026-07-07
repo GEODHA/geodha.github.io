@@ -137,7 +137,6 @@ export default class ReportsService {
 
   private async classifyImages(photoUrls: string[]): Promise<Report['aiClassification']> {
     // TODO: Integrate with Google Cloud Vision API
-    console.log("AI Classification: Using placeholder data for:", photoUrls);
     return {
       detectedObjects: ['waste', 'garbage'],
       confidence: 0.85,
@@ -170,7 +169,6 @@ export default class ReportsService {
       const q = query(this.reportsCollection, ...constraints);
       const snapshot = await getDocs(q);
       
-      console.log(`✅ Fetched ${snapshot.docs.length} reports for map`);
       return snapshot.docs.map(doc => {
         const data = doc.data();
         return transformToReport(doc.id, data);
@@ -278,7 +276,6 @@ export default class ReportsService {
                lng >= bounds.west && lng <= bounds.east;
       });
       
-      console.log(`✅ Fetched ${filteredReports.length} reports in bounds`);
       return filteredReports;
     } catch (error) {
       console.error('❌ Error fetching reports in bounds:', error);

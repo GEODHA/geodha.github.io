@@ -26,9 +26,7 @@ export const initializeAuth = async () => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user && !authInitialized) {
         try {
-          console.log('🔐 Attempting anonymous sign-in...');
           await signInAnonymously(auth);
-          console.log('✅ Website anonymous authentication successful');
         } catch (error) {
           console.error('❌ Website anonymous authentication failed:', error);
           if (error instanceof Error) {

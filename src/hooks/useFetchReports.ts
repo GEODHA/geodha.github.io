@@ -12,16 +12,18 @@ interface UseFetchReportsReturn {
 }
 
 export function getSampleReports(): Report[] {
-    console.log('🔧 DEVELOPMENT MODE: Using sample data for heatmap testing');
-    const transformedSampleReports = sampleReports.map(report => ({
+    return sampleReports.map(report => ({
         ...report,
         createdAt: report.createdAt,
         updatedAt: report.updatedAt
     })) as Report[];
-    return transformedSampleReports;
 }
 
-export const useFetchReports = (isTesting): UseFetchReportsReturn => {
+/**
+ * Fetches live app reports from Firestore.
+ * @param useSampleData when true, returns bundled sample data (for local testing).
+ */
+export const useFetchReports = (useSampleData: boolean = false): UseFetchReportsReturn => {
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -31,31 +33,14 @@ export const useFetchReports = (isTesting): UseFetchReportsReturn => {
         try {
             setLoading(true);
 
-            if (isTesting) {
-                // Using sample data for heatmap testing
+            if (useSampleData) {
                 setReports(getSampleReports());
             } else {
-                // Using live Firebase data
-                console.log('🔥 PRODUCTION MODE: Using live Firebase data');
                 try {
-                    const fetchedReports = await reportsService.getReports();
-                    console.log('📊 Total fetched reports:', fetchedReports.length);
-
-                    // Log status distribution for debugging
-                    const statusCounts = fetchedReports.reduce((acc, r) => {
-                        acc[r.status] = (acc[r.status] || 0) + 1;
-                        return acc;
-                    }, {} as Record<string, number>);
-                    console.log('📊 Status distribution:', statusCounts);
-                    console.log('📊all reports : ', fetchedReports);
-
                     // Show all reports (including anonymous ones for legacy data)
-                    setReports(fetchedReports);
+                    setReports(await reportsService.getReports());
                 } catch (firebaseError) {
-                    console.error('🔥 Firebase Error Details:', firebaseError);
-                    console.log('🔧 Falling back to sample data due to Firebase connection issues');
-
-                    // Fallback to sample data if Firebase fails
+                    console.error('Firebase reports fetch failed, falling back to sample data:', firebaseError);
                     setReports(getSampleReports());
                     toast({
                         title: "Using Sample Data",
@@ -82,6 +67,7 @@ export const useFetchReports = (isTesting): UseFetchReportsReturn => {
             setReports([]);
             setError(null);
         })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
 

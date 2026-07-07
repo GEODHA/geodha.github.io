@@ -20,8 +20,8 @@ import type { Report } from '@/services/reportsService';
 import { formatDistanceToNow } from 'date-fns';
 import { ThumbsUp } from 'lucide-react';
 
-// ── Static geographic data (boundaries never change — safe as static import) ──
-import wardBoundaries from '../../data/ward-boundaries.json';
+// ── Shared ward-boundary geometry helpers ─────────────────────────────────────
+import { ZONE_LOOKUP, WARD_CENTROIDS, findWardForPoint } from '@/lib/geo';
 
 // ── Firebase hooks ────────────────────────────────────────────────────────────
 import { useWardStats }            from '@/hooks/useWardStats';
@@ -34,63 +34,6 @@ import type { WardData, RecommendedActionDoc, ProblemCategory, TestimonialDoc } 
 // ── Severity scale ────────────────────────────────────────────────────────────
 import { computeScale, BAND } from '@/lib/severity';
 import type { BandLevel, ClassifyFn } from '@/lib/severity';
-
-// ── Zone + centroid lookup from static GeoJSON boundaries ────────────────────
-
-interface BoundaryProps { ward_num: number; ward_name: string; zone: string; }
-type BoundaryFeature = GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon, BoundaryProps>;
-
-function outerRingFromGeometry(geom: GeoJSON.Geometry): number[][] {
-  if (geom.type === 'MultiPolygon') {
-    const polys = (geom as GeoJSON.MultiPolygon).coordinates as number[][][][];
-    const best  = polys.reduce((a, b) => (a[0].length >= b[0].length ? a : b));
-    return best[0] as number[][];
-  }
-  return (geom as GeoJSON.Polygon).coordinates[0] as number[][];
-}
-
-const { ZONE_LOOKUP, WARD_CENTROIDS } = (() => {
-  const zones:     Record<number, string>           = {};
-  const centroids: Record<number, [number, number]> = {};
-  for (const f of (wardBoundaries as GeoJSON.FeatureCollection).features as BoundaryFeature[]) {
-    const num  = f.properties.ward_num;
-    zones[num] = f.properties.zone ?? '';
-    const ring = outerRingFromGeometry(f.geometry);
-    let sumLon = 0, sumLat = 0;
-    for (const [lon, lat] of ring) { sumLon += lon; sumLat += lat; }
-    centroids[num] = [sumLat / ring.length, sumLon / ring.length];
-  }
-  return { ZONE_LOOKUP: zones, WARD_CENTROIDS: centroids };
-})();
-
-// ── Point-in-polygon (ray-casting) ────────────────────────────────────────────
-
-function pointInRing(lat: number, lng: number, ring: number[][]): boolean {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [xi, yi] = ring[i]; // [lng, lat]
-    const [xj, yj] = ring[j];
-    const intersect = ((yi > lat) !== (yj > lat)) &&
-      (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi);
-    if (intersect) inside = !inside;
-  }
-  return inside;
-}
-
-function findWardForPoint(lat: number, lng: number): number | null {
-  for (const feat of (wardBoundaries as GeoJSON.FeatureCollection).features as BoundaryFeature[]) {
-    const geom = feat.geometry;
-    const wardNum = feat.properties.ward_num;
-    if (geom.type === 'Polygon') {
-      if (pointInRing(lat, lng, geom.coordinates[0] as number[][])) return wardNum;
-    } else if (geom.type === 'MultiPolygon') {
-      for (const poly of geom.coordinates as number[][][][]) {
-        if (pointInRing(lat, lng, poly[0])) return wardNum;
-      }
-    }
-  }
-  return null;
-}
 
 // ── Scale hook (depends on live Firebase ward data) ───────────────────────────
 

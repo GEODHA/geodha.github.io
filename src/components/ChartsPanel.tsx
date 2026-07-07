@@ -1,3 +1,6 @@
+// ChartsPanel (formerly pages/Dashboard.tsx) — reports bar/pie charts panel.
+// Currently DORMANT: only referenced from commented-out code in Hero.tsx.
+// Kept for a future filtered-reports/charts view (see docs/ROADMAP.md §1a).
 import React, { useEffect } from 'react';
 import { Report } from "@/services/reportsService";
 import { getChartDataFromReports, getFilteredReportsWithCustomDateRange, getReportsByYear, ReducedReport } from '@/lib/utils';
@@ -5,7 +8,7 @@ import '@/styles/dashboard.css';
 import ReportsBarChart from '@/components/ReportsBarChart';
 import TrashPieChart from '@/components/TrashPieChart';
 
-interface DashboardProps {
+interface ChartsPanelProps {
     reports: Report[];
     allowCustomDateRange?: boolean;// turn it off if the parent component doesn't want to allow custom date range selection i.e - on landing page
 }
@@ -16,7 +19,7 @@ const options = {
     currentYear: new Date().getFullYear(),
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ reports, allowCustomDateRange=false }) => {
+const ChartsPanel: React.FC<ChartsPanelProps> = ({ reports, allowCustomDateRange=false }) => {
     const [chartData, setChartData] = React.useState<ReducedReport[]>([]);
 
     const [yearRange, setYearRange] = React.useState<string>("all");
@@ -111,4 +114,4 @@ const Dashboard: React.FC<DashboardProps> = ({ reports, allowCustomDateRange=fal
 };
 
 
-export default Dashboard;
+export default ChartsPanel;
