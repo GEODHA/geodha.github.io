@@ -90,8 +90,9 @@ const TrashPieChart: React.FC<TrashPieChartProps> = ({ reports }) => {
     }, [reports, categorizeTrash])
 
     function onLegendClick(secondaryCategory: string) {
-        // navigate to reports list in map page
-        navigate('/map', { state: { secondaryCategoryFilter: secondaryCategory } });
+        // Map page merged into the dashboard; category-filter state is forwarded
+        // for a future filtered-reports view (see docs/specs).
+        navigate('/dashboard', { state: { secondaryCategoryFilter: secondaryCategory } });
     }
 
 

@@ -29,7 +29,7 @@ const Hero = () => {
 
             <div className="flex flex-col sm:flex-row gap-4">
               <Button variant="hero" size="lg" className="flex-1 sm:flex-none py-4 sm:py-3" onClick={() => {
-                window.history.pushState({}, '', '/map');
+                window.history.pushState({}, '', '/dashboard');
                 window.dispatchEvent(new PopStateEvent('popstate'));
                 window.scrollTo(0, 0);
               }}>

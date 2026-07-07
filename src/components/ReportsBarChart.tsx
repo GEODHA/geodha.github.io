@@ -14,8 +14,9 @@ const ReportsBarChart: React.FC<ReportsBarChartProps> = ({
     const navigate = useNavigate();
 
     function barClickHandler(bri: BarRectangleItem) {
-        // navigate to reports list in map page and use the below date range to filter reports
-        navigate('/map', { state: { dateRangeSelected: bri["dateRange"] } });
+        // Map page merged into the dashboard; date-filter state is forwarded
+        // for a future filtered-reports view (see docs/specs).
+        navigate('/dashboard', { state: { dateRangeSelected: bri["dateRange"] } });
     }
 
     return (

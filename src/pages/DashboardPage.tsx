@@ -10,6 +10,15 @@ import {
 import WardMap from '@/components/WardMap';
 import MapErrorBoundary from '@/components/MapErrorBoundary';
 import type { TestimonialMarkerInfo } from '@/components/WardMap';
+import { APP_REPORT_STATUS_COLORS } from '@/components/AppReportsLayer';
+import type { AppReportPin, AppReportStatus } from '@/components/AppReportsLayer';
+
+// ── Live app reports (GEODHA mobile app) ─────────────────────────────────────
+import { useFetchReports } from '@/hooks/useFetchReports';
+import { initializeAuth } from '@/lib/firebase';
+import type { Report } from '@/services/reportsService';
+import { formatDistanceToNow } from 'date-fns';
+import { ThumbsUp } from 'lucide-react';
 
 // ── Static geographic data (boundaries never change — safe as static import) ──
 import wardBoundaries from '../../data/ward-boundaries.json';
@@ -697,6 +706,110 @@ function WardSheet({ data, zone, scales, actions, allTestimonials, onClose }: Wa
   );
 }
 
+// ── App report detail sheet ───────────────────────────────────────────────────
+// Shown when a live GEODHA app-report pin is tapped (visible when zoomed in).
+
+function ReportSheet({ report, onClose }: { report: Report; onClose: () => void }) {
+  const [lightbox, setLightbox] = useState<{ idx: number } | null>(null);
+  const photos = report.status !== 'archived' ? report.photos : [];
+  const statusColor = APP_REPORT_STATUS_COLORS[report.status as AppReportStatus] ?? APP_REPORT_STATUS_COLORS.pending;
+
+  return (
+    <>
+      {lightbox && photos.length > 0 && (
+        <ImageLightbox images={photos} initialIndex={lightbox.idx} onClose={() => setLightbox(null)} />
+      )}
+
+      <div className="flex flex-col">
+        {/* Header */}
+        <div className="flex items-start justify-between px-5 pt-3 pb-3 border-b border-gray-100">
+          <div className="min-w-0">
+            <h2 className="text-xl font-bold leading-tight" style={{ fontFamily: "'Barlow Condensed', sans-serif" }}>
+              {report.title}
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5 truncate">
+              {report.location.address || report.location.ward || 'Location unavailable'}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 ml-3 mt-0.5 shrink-0">
+            <span
+              className="inline-block font-bold rounded-full text-[11px] px-2 py-0.5 text-white capitalize"
+              style={{ background: statusColor }}
+            >
+              {report.status}
+            </span>
+            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700" aria-label="Close">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto" style={{ maxHeight: 'calc(82vh - 100px)', paddingBottom: 'env(safe-area-inset-bottom, 1.5rem)' }}>
+
+          {/* Photos */}
+          {photos.length > 0 ? (
+            <section className="px-5 pt-4 pb-2">
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {photos.map((src, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setLightbox({ idx: i })}
+                    className="flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    aria-label={`View photo ${i + 1}`}
+                  >
+                    <img src={src} alt={`Report photo ${i + 1}`} className="h-28 w-28 object-cover" loading="lazy" />
+                  </button>
+                ))}
+              </div>
+            </section>
+          ) : report.status === 'archived' && report.photos.length > 0 ? (
+            <section className="px-5 pt-4 pb-2">
+              <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5 border border-dashed border-gray-200">
+                <Camera className="h-3.5 w-3.5" />
+                {report.photos.length} image(s) archived for this report.
+              </div>
+            </section>
+          ) : null}
+
+          {/* Description */}
+          {report.description && (
+            <section className="px-5 pt-3 pb-2">
+              <p className="text-sm text-gray-700 leading-relaxed">{report.description}</p>
+            </section>
+          )}
+
+          {/* Meta */}
+          <section className="px-5 pt-3 pb-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-gray-500">
+              <span className="capitalize bg-gray-100 rounded-full px-2 py-0.5 font-medium text-gray-600">{report.category}</span>
+              {report.location.ward && <span>Ward: {report.location.ward}</span>}
+              <span>Reported {formatDistanceToNow(report.createdAt.toDate(), { addSuffix: true })}</span>
+              <span className="flex items-center gap-1"><ThumbsUp className="h-3 w-3" />{report.endorsementCount}</span>
+            </div>
+          </section>
+
+          {/* CTA */}
+          <div className="px-5 pt-4 pb-6">
+            <Link
+              to="/report"
+              onClick={() => window.scrollTo(0, 0)}
+              className="flex items-center justify-between w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 shadow-sm hover:shadow transition-shadow"
+            >
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Seen something similar?</p>
+                <p className="text-xs text-gray-500 mt-0.5">Report a garbage issue in your area with the GEODHA app.</p>
+              </div>
+              <div className="shrink-0 ml-3 h-8 w-8 rounded-full flex items-center justify-center" style={{ background: 'var(--gradient-hero)' }}>
+                <ArrowRight className="h-4 w-4 text-white" />
+              </div>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ── Map legend ────────────────────────────────────────────────────────────────
 
 function MapLegend() {
@@ -719,6 +832,14 @@ function MapLegend() {
       <span className="flex items-center gap-1 ml-1">
         <span className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-green-700 text-white text-[8px] font-bold">✓</span>
         <span>Success stories</span>
+      </span>
+      <span className="flex items-center gap-1 ml-1 pl-2 border-l border-gray-200">
+        <span className="inline-flex gap-0.5">
+          <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#ef4444' }} />
+          <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#eab308' }} />
+          <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#22c55e' }} />
+        </span>
+        <span>App reports (zoom in)</span>
       </span>
     </div>
   );
@@ -755,13 +876,39 @@ const DashboardPage = () => {
 
   const scales = useScales(wardDataMap);
 
+  // ── Live app reports (non-blocking — the map works without them) ──────────
+  const [authReady, setAuthReady] = useState(false);
+  useEffect(() => {
+    initializeAuth()
+      .catch((err) => console.error('Firebase auth init failed:', err))
+      .finally(() => setAuthReady(true));
+  }, []);
+  const { reports: appReports, loading: reportsLoading } = useFetchReports(false);
+
+  const appReportPins = useMemo<AppReportPin[]>(() => {
+    if (!authReady || reportsLoading) return [];
+    return appReports
+      .filter((r) =>
+        r.id != null &&
+        r.location?.latitude  != null && !isNaN(r.location.latitude) &&
+        r.location?.longitude != null && !isNaN(r.location.longitude))
+      .map((r) => ({
+        id:       r.id!,
+        position: [r.location.latitude, r.location.longitude] as [number, number],
+        title:    r.title,
+        category: r.category,
+        status:   r.status as AppReportStatus,
+      }));
+  }, [authReady, reportsLoading, appReports]);
+
   // ── URL params ────────────────────────────────────────────────────────────
   const [searchParams] = useSearchParams();
   const urlWardHandled = useRef(false);
 
   // ── UI state ──────────────────────────────────────────────────────────────
-  const [selectedWard, setSelectedWard] = useState<{ num: number; data: WardData; zone: string } | null>(null);
-  const [sheetOpen,    setSheetOpen]    = useState(false);
+  const [selectedWard,   setSelectedWard]   = useState<{ num: number; data: WardData; zone: string } | null>(null);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [sheetOpen,      setSheetOpen]      = useState(false);
   const [zoomToWard,   setZoomToWard]   = useState<number | null>(null);
   const [fullscreen,   setFullscreen]   = useState(false);
   const [locating,     setLocating]     = useState(false);
@@ -791,19 +938,29 @@ const DashboardPage = () => {
   };
 
   const handleWardSelect = (wardNum: number, data: WardData, zone: string) => {
+    setSelectedReport(null);
     setSelectedWard({ num: wardNum, data, zone });
     setSheetOpen(true);
   };
 
   const handleSearchSelect = (wardNum: number, data: WardData, zone: string) => {
+    setSelectedReport(null);
     setSelectedWard({ num: wardNum, data, zone });
     setSheetOpen(true);
     setZoomToWard(wardNum);
   };
 
+  const handleReportSelect = (reportId: string) => {
+    const report = appReports.find((r) => r.id === reportId);
+    if (!report) return;
+    setSelectedWard(null);
+    setSelectedReport(report);
+    setSheetOpen(true);
+  };
+
   const handleClose = () => {
     setSheetOpen(false);
-    setTimeout(() => setSelectedWard(null), 320);
+    setTimeout(() => { setSelectedWard(null); setSelectedReport(null); }, 320);
   };
 
   // Auto-open ward from ?ward= URL param once data is loaded
@@ -921,6 +1078,8 @@ const DashboardPage = () => {
             onWardSelect={handleWardSelect}
             zoomToWard={zoomToWard}
             testimonialMarkers={testimonialMarkers}
+            appReports={appReportPins}
+            onReportSelect={handleReportSelect}
           />
         </MapErrorBoundary>
       </div>
@@ -1056,7 +1215,9 @@ const DashboardPage = () => {
           >
             <div className="w-10 h-1 rounded-full bg-gray-300" />
           </div>
-          {selectedWard && (
+          {selectedReport ? (
+            <ReportSheet report={selectedReport} onClose={handleClose} />
+          ) : selectedWard ? (
             <WardSheet
               data={selectedWard.data}
               zone={selectedWard.zone}
@@ -1065,7 +1226,7 @@ const DashboardPage = () => {
               allTestimonials={testimonials}
               onClose={handleClose}
             />
-          )}
+          ) : null}
         </div>
       </div>
     </>

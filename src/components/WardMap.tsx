@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, GeoJSON, Marker, useMap } from 'react-leaflet';
 import type { Layer, PathOptions } from 'leaflet';
 import L from 'leaflet';
@@ -7,6 +7,8 @@ import 'leaflet/dist/leaflet.css';
 import wardBoundaries from '../../data/ward-boundaries.json';
 import { computeScale, BAND } from '@/lib/severity';
 import type { BandLevel } from '@/lib/severity';
+import AppReportsLayer, { APP_REPORTS_PANE } from './AppReportsLayer';
+import type { AppReportPin } from './AppReportsLayer';
 
 // WardData type lives in the service layer — re-export for legacy consumers
 export type { WardData } from '@/services/geodhaService';
@@ -46,6 +48,61 @@ interface Props {
   onWardSelect:        (wardNum: number, data: WardData, zone: string) => void;
   zoomToWard?:         number | null;
   testimonialMarkers?: TestimonialMarkerInfo[];
+  /** Live GEODHA app reports — shown as pins when zoomed into a ward. */
+  appReports?:         AppReportPin[];
+  onReportSelect?:     (reportId: string) => void;
+}
+
+// ── Zoom crossfade (ward icons ⇄ app report pins) ────────────────────────────
+// t = 0 → city view: ward icons fully visible, app reports hidden.
+// t = 1 → ward view: app reports fully visible, ward icons hidden.
+// Between CROSSFADE_START and CROSSFADE_END both layers are partially visible.
+
+const WARD_ICONS_PANE  = 'ward-icons';
+const CROSSFADE_START  = 13;
+const CROSSFADE_END    = 14.5;
+
+function crossfadeT(zoom: number): number {
+  return Math.min(1, Math.max(0, (zoom - CROSSFADE_START) / (CROSSFADE_END - CROSSFADE_START)));
+}
+
+/**
+ * Creates the two crossfade panes and drives their opacity from the zoom
+ * level. Rendered as the FIRST child of MapContainer so the panes exist
+ * before any marker that targets them is added.
+ */
+function MapSetup({ onReady, onCrossfade }: {
+  onReady:      () => void;
+  onCrossfade?: (t: number) => void;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    const wardPane   = map.getPane(WARD_ICONS_PANE)  ?? map.createPane(WARD_ICONS_PANE);
+    const reportPane = map.getPane(APP_REPORTS_PANE) ?? map.createPane(APP_REPORTS_PANE);
+    wardPane.style.zIndex   = '620';
+    reportPane.style.zIndex = '640';
+    for (const pane of [wardPane, reportPane]) {
+      pane.style.transition = 'opacity 300ms ease, visibility 300ms ease';
+    }
+
+    const apply = () => {
+      const t = crossfadeT(map.getZoom());
+      wardPane.style.opacity      = String(1 - t);
+      wardPane.style.visibility   = t >= 1 ? 'hidden' : 'visible';
+      reportPane.style.opacity    = String(t);
+      reportPane.style.visibility = t <= 0 ? 'hidden' : 'visible';
+      onCrossfade?.(t);
+    };
+
+    apply();
+    map.on('zoomend', apply);
+    onReady();
+    return () => { map.off('zoomend', apply); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map]);
+
+  return null;
 }
 
 // ── Icon HTML ─────────────────────────────────────────────────────────────────
@@ -158,8 +215,12 @@ function featureBounds(geometry: GeoJSON.Geometry): L.LatLngBounds | null {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimonialMarkers = [] }: Props) => {
+const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimonialMarkers = [], appReports = [], onReportSelect }: Props) => {
   const geoJsonRef = useRef<L.GeoJSON | null>(null);
+
+  // Crossfade state — panes must exist before pane-targeted markers render.
+  const [panesReady, setPanesReady] = useState(false);
+  const [fadeT,      setFadeT]      = useState(0);
 
   const allWards = useMemo(() => Object.values(wardDataMap), [wardDataMap]);
 
@@ -219,9 +280,11 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
     const ward       = wardDataMap[num];
     const band       = (ward ? classify.total(ward.total_reports) : 0) as BandLevel;
     const isSelected = num === selectedWard;
+    // Lighten the choropleth as the user zooms in so app-report pins sit on
+    // readable streets (fadeT: 0 = city view, 1 = ward view).
     return {
       fillColor:   BAND[band].mapColor,
-      fillOpacity: isSelected ? 0.88 : 0.60,
+      fillOpacity: (isSelected ? 0.88 : 0.60) * (1 - 0.6 * fadeT),
       color:       isSelected ? '#1a1a1a' : 'rgba(255,255,255,0.7)',
       weight:      isSelected ? 2 : 0.5,
     };
@@ -253,18 +316,18 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
     });
   };
 
-  // Re-style on selection change
+  // Re-style on selection or crossfade change
   useEffect(() => {
     geoJsonRef.current?.setStyle((f) => styleFeature(f));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedWard]);
+  }, [selectedWard, fadeT]);
 
   return (
     <MapContainer
       center={[12.97, 77.594]}
       zoom={11}
       minZoom={10}
-      maxZoom={16}
+      maxZoom={18}
       maxBounds={[[12.68, 77.30], [13.20, 77.90]]}
       maxBoundsViscosity={0.9}
       style={{ height: '100%', width: '100%', background: '#fff' }}
@@ -277,6 +340,9 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
         opacity={0.55}
       />
 
+      {/* Panes + zoom crossfade driver — must precede pane-targeted markers */}
+      <MapSetup onReady={() => setPanesReady(true)} onCrossfade={setFadeT} />
+
       {zoomToWard != null && <ZoomController wardNum={zoomToWard} />}
 
       {/* Ward choropleth */}
@@ -288,12 +354,14 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
         ref={(r) => { if (r) geoJsonRef.current = r; }}
       />
 
-      {/* Ward cluster markers: problem icons + testimonial badge (merged) */}
-      {docMarkers.map(({ wardNum, latlng, icons }) => (
+      {/* Ward cluster markers: problem icons + testimonial badge (merged).
+          Rendered in the ward-icons pane so they fade out on zoom-in. */}
+      {panesReady && docMarkers.map(({ wardNum, latlng, icons }) => (
         <Marker
           key={`prob-${wardNum}`}
           position={latlng}
           icon={makeProblemIcon(icons)}
+          pane={WARD_ICONS_PANE}
           zIndexOffset={800}
           eventHandlers={{
             click: () => {
@@ -310,12 +378,16 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
         />
       ))}
 
-      {/* Exact-location markers — negative (red !) and positive (green ✓) */}
-      {testimonialMarkers.filter((m) => m.isExact).map((m) => (
+      {/* Exact-location markers — negative (red !) and positive (green ✓).
+          Same pane as the ward icons so (a) zIndexOffset stacks them ON TOP of
+          the top-affected icon clusters, and (b) they crossfade out together
+          when zooming into app-report view. */}
+      {panesReady && testimonialMarkers.filter((m) => m.isExact).map((m) => (
         <Marker
           key={`te-${m.id}`}
           position={m.latlng}
           icon={m.isPositive ? makePositiveExactIcon(m.isCritical) : makeTestimonialExactIcon(m.isCritical)}
+          pane={WARD_ICONS_PANE}
           zIndexOffset={950}
           eventHandlers={{
             click: () => {
@@ -331,6 +403,11 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
           }}
         />
       ))}
+
+      {/* Live GEODHA app reports — fade in as the user zooms into a ward */}
+      {panesReady && appReports.length > 0 && (
+        <AppReportsLayer reports={appReports} onReportSelect={onReportSelect} />
+      )}
     </MapContainer>
   );
 };

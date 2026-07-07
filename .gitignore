@@ -203,3 +203,4 @@ scripts/fix_firebase_data_v2.ts
 scripts/update_legacy_author_names.ts
 scripts/analyze_missing_images.cjs
 data/ward-heatmap2.json
+docs/ROADMAP.md

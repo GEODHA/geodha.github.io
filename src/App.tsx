@@ -3,9 +3,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
-import MapReports from "./pages/MapReports";
 import DashboardPage from "./pages/DashboardPage";
 import DataPage from "./pages/DataPage";
 import ReportPage from "./pages/ReportPage";
@@ -57,6 +56,12 @@ function ScrollToTop() {
   return null;
 }
 
+/** Legacy /map → /dashboard redirect (map page merged into the dashboard). */
+function LegacyMapRedirect() {
+  const { state } = useLocation();
+  return <Navigate to="/dashboard" replace state={state} />;
+}
+
 /** Renders children only on the home page — used to gate the TopBanner. */
 function ShowOnHome({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
@@ -96,7 +101,7 @@ const App = () => {
                     <Route path="/data"      element={<DataPage />} />
                     <Route path="/report"    element={<ReportPage />} />
                     <Route path="/blog"      element={<Blog />} />
-                    <Route path="/map"       element={<MapReports />} />
+                    <Route path="/map"       element={<LegacyMapRedirect />} />
                     <Route path="/about"     element={<About />} />
                     <Route path="/privacy"   element={<PrivacyPolicy />} />
                     <Route path="/get-started" element={<GetStarted />} />
