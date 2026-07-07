@@ -295,7 +295,7 @@ const ReportPage = () => {
           </div>
           <h2
             className="text-3xl font-bold text-foreground mb-3"
-            style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+            style={{ fontFamily: "'Archivo', sans-serif" }}
           >
             Report received
           </h2>
@@ -338,7 +338,7 @@ const ReportPage = () => {
         <div className="container px-4 sm:px-6 lg:px-8 py-8">
           <h1
             className="text-4xl font-bold text-foreground mb-3"
-            style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+            style={{ fontFamily: "'Archivo', sans-serif" }}
           >
             Report a Problem
           </h1>
@@ -496,7 +496,7 @@ const ReportPage = () => {
           <div className="mb-10">
             <h2
               className="text-3xl sm:text-4xl font-bold text-foreground mb-3"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+              style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               What can you do about it?
             </h2>
@@ -520,7 +520,7 @@ const ReportPage = () => {
 
                   <h3
                     className="font-bold text-foreground mb-1.5 leading-snug"
-                    style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1.1rem' }}
+                    style={{ fontFamily: "'Archivo', sans-serif", fontSize: '1.1rem' }}
                   >
                     {card.title}
                   </h3>

@@ -116,7 +116,7 @@ export default function VolunteerPage() {
           </p>
           <h1
             className="text-4xl sm:text-5xl font-bold text-foreground mb-3"
-            style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+            style={{ fontFamily: "'Archivo', sans-serif" }}
           >
             🧹 Volunteer for Cleanups
           </h1>
@@ -145,7 +145,7 @@ export default function VolunteerPage() {
                 <div>
                   <h2
                     className="text-xl font-bold text-foreground leading-tight mb-1"
-                    style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1.35rem' }}
+                    style={{ fontFamily: "'Archivo', sans-serif", fontSize: '1.35rem' }}
                   >
                     {org.name}
                   </h2>

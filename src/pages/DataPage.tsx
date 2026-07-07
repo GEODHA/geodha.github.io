@@ -82,7 +82,7 @@ const DataPage = () => {
             </p>
             <h1
               className="text-4xl sm:text-5xl font-bold text-foreground mb-3"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+              style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               Turning civic data into
               <span className="bg-gradient-primary bg-clip-text text-transparent"> actionable insight.</span>
@@ -110,7 +110,7 @@ const DataPage = () => {
                   <div>
                     <h3
                       className="font-bold text-foreground mb-1"
-                      style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1.1rem' }}
+                      style={{ fontFamily: "'Archivo', sans-serif", fontSize: '1.1rem' }}
                     >
                       {point.label}
                     </h3>
@@ -136,7 +136,7 @@ const DataPage = () => {
           <div className="mb-8">
             <h2
               className="text-2xl sm:text-3xl font-bold text-foreground mb-2"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+              style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               Analysis Previews
             </h2>
@@ -165,7 +165,7 @@ const DataPage = () => {
                 {/* Title */}
                 <h3
                   className="font-bold text-foreground mb-3 pr-20 leading-tight"
-                  style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1.15rem' }}
+                  style={{ fontFamily: "'Archivo', sans-serif", fontSize: '1.15rem' }}
                 >
                   {analysis.title}
                 </h3>
@@ -218,7 +218,7 @@ const DataPage = () => {
             </p>
             <h2
               className="text-3xl sm:text-4xl font-bold text-white mb-4"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+              style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               Want to collaborate on this data?
             </h2>

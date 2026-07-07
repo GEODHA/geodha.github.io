@@ -24,7 +24,7 @@ const StoreButtons = ({ placement, className = '' }: StoreButtonsProps) => (
     <Button
       variant="default"
       size="lg"
-      className="flex-1 sm:flex-none py-4 sm:py-3 bg-black text-white hover:bg-black/90"
+      className="flex-1 sm:flex-none py-4 sm:py-3 bg-black text-white hover:bg-black/90 border border-white/15"
       onClick={() => open(PLAY_STORE_URL, 'play', placement)}
       aria-label="Get the GEODHA app on Google Play"
     >
@@ -34,7 +34,7 @@ const StoreButtons = ({ placement, className = '' }: StoreButtonsProps) => (
     <Button
       variant="default"
       size="lg"
-      className="flex-1 sm:flex-none py-4 sm:py-3 bg-black text-white hover:bg-black/90"
+      className="flex-1 sm:flex-none py-4 sm:py-3 bg-black text-white hover:bg-black/90 border border-white/15"
       onClick={() => open(IOS_APP_URL, 'ios', placement)}
       aria-label={IOS_IS_TESTFLIGHT ? 'Join the GEODHA iOS beta on TestFlight' : 'Download the GEODHA app on the App Store'}
     >

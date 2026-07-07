@@ -127,7 +127,7 @@ function SectionLabel({ children }: { children: string }) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h2
-      style={{ fontFamily: "'Barlow Condensed', sans-serif", color: C.text }}
+      style={{ fontFamily: "'Archivo', sans-serif", color: C.text }}
       className="text-[28px] sm:text-[36px] font-bold leading-tight tracking-tight mb-2"
     >
       {children}
@@ -171,7 +171,7 @@ export default function BWGGuidePage() {
           SWM 2026 · Bulk Waste Generators
         </span>
         <h1
-          style={{ fontFamily: "'Barlow Condensed', sans-serif", color: C.white, lineHeight: 1.05, letterSpacing: '-1px' }}
+          style={{ fontFamily: "'Archivo', sans-serif", color: C.white, lineHeight: 1.05, letterSpacing: '-1px' }}
           className="relative text-[clamp(30px,6vw,50px)] font-bold mb-4"
         >
           You generate more waste<br />
@@ -203,7 +203,7 @@ export default function BWGGuidePage() {
             {THRESHOLDS.map(t => (
               <div key={t.label} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14 }} className="p-5 text-center">
                 <div className="text-[32px] mb-2">{t.icon}</div>
-                <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 24, fontWeight: 700, color: C.green, marginBottom: 4 }}>
+                <div style={{ fontFamily: "'Archivo', sans-serif", fontSize: 24, fontWeight: 700, color: C.green, marginBottom: 4 }}>
                   {t.value}
                 </div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 4 }}>{t.label}</div>
@@ -233,7 +233,7 @@ export default function BWGGuidePage() {
           <div style={{ background: C.greenDark, borderRadius: 16 }} className="p-8 sm:p-10 text-center">
             <div className="text-[48px] mb-4">🚧</div>
             <h2
-              style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 28, fontWeight: 700, color: C.white, marginBottom: 12 }}
+              style={{ fontFamily: "'Archivo', sans-serif", fontSize: 28, fontWeight: 700, color: C.white, marginBottom: 12 }}
             >
               Detailed guidance coming soon
             </h2>
@@ -269,7 +269,7 @@ export default function BWGGuidePage() {
                 {OBLIGATIONS.map(o => (
                   <div key={o.num} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14 }} className="p-6">
                     <div className="flex items-start gap-4">
-                      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 28, fontWeight: 700, color: C.greenMid, lineHeight: 1, minWidth: 40, flexShrink: 0 }}>
+                      <div style={{ fontFamily: "'Archivo', sans-serif", fontSize: 28, fontWeight: 700, color: C.greenMid, lineHeight: 1, minWidth: 40, flexShrink: 0 }}>
                         {o.num}
                       </div>
                       <div className="flex-1">
@@ -297,7 +297,7 @@ export default function BWGGuidePage() {
                 {PROCESSING_OPTIONS.map(opt => (
                   <div key={opt.title} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14 }} className="p-5">
                     <div className="text-[30px] mb-3">{opt.icon}</div>
-                    <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 8 }}>{opt.title}</h3>
+                    <h3 style={{ fontFamily: "'Archivo', sans-serif", fontSize: 20, fontWeight: 700, color: C.text, marginBottom: 8 }}>{opt.title}</h3>
                     <p style={{ fontSize: 13, color: C.textSec, lineHeight: 1.55 }}>{opt.desc}</p>
                   </div>
                 ))}

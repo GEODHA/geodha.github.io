@@ -14,7 +14,7 @@ const About = () => {
           <div className="text-center space-y-6 max-w-4xl mx-auto">
             <h1
               className="text-4xl sm:text-5xl lg:text-6xl font-bold"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+              style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               About{" "}
               <span className="bg-gradient-primary bg-clip-text text-transparent">
@@ -37,7 +37,7 @@ const About = () => {
           <div className="text-center space-y-4 mb-16">
             <h2
               className="text-3xl sm:text-4xl font-bold"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+              style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               What does GEODHA{" "}
               <span className="bg-gradient-primary bg-clip-text text-transparent">
@@ -126,7 +126,7 @@ const About = () => {
           <div className="text-center space-y-4 mb-16">
             <h2
               className="text-3xl sm:text-4xl font-bold"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+              style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               How can you help?
             </h2>
@@ -164,7 +164,7 @@ const About = () => {
           <div className="text-center space-y-4 mb-16">
             <h2
               className="text-3xl sm:text-4xl font-bold"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+              style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               Join Our Team
             </h2>

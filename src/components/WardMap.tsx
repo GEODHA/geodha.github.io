@@ -269,7 +269,7 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
     const cfg   = BAND[band];
 
     layer.bindTooltip(
-      `<div style="font-family:'Barlow Condensed',sans-serif;">
+      `<div style="font-family:'Archivo',sans-serif;">
          <div style="font-size:14px;font-weight:700;">${props.ward_name}</div>
          <span style="background:${cfg.badgeBg};color:${cfg.badgeFg};font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;">${cfg.label}</span>
        </div>`,

@@ -360,7 +360,7 @@ function WardSheet({ data, zone, scales, actions, allTestimonials, onClose }: Wa
       <div className="flex flex-col">
         <div className="flex items-start justify-between px-5 pt-3 pb-3 border-b border-gray-100">
           <div>
-            <h2 className="text-xl font-bold leading-tight" style={{ fontFamily: "'Barlow Condensed', sans-serif" }}>
+            <h2 className="text-xl font-bold leading-tight" style={{ fontFamily: "'Archivo', sans-serif" }}>
               {data.ward_name}
             </h2>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -669,7 +669,7 @@ function ReportSheet({ report, onClose }: { report: Report; onClose: () => void 
         {/* Header */}
         <div className="flex items-start justify-between px-5 pt-3 pb-3 border-b border-gray-100">
           <div className="min-w-0">
-            <h2 className="text-xl font-bold leading-tight" style={{ fontFamily: "'Barlow Condensed', sans-serif" }}>
+            <h2 className="text-xl font-bold leading-tight" style={{ fontFamily: "'Archivo', sans-serif" }}>
               {report.title}
             </h2>
             <p className="text-xs text-gray-500 mt-0.5 truncate">
@@ -1087,7 +1087,7 @@ const DashboardPage = () => {
         <div className="px-4 sm:px-6 pt-5 pb-3 bg-white">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight" style={{ fontFamily: "'Barlow Condensed', sans-serif" }}>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight" style={{ fontFamily: "'Archivo', sans-serif" }}>
                 Bengaluru · Garbage Crisis Map
               </h1>
               <p className="text-xs text-gray-500 mt-0.5">May 2026 · Select any ward or area to view more details</p>

@@ -19,7 +19,20 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Archivo', 'Noto Sans Kannada', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+				mono: ['Space Mono', 'ui-monospace', 'monospace'],
+			},
 			colors: {
+				/* GEODHA UI Kit poster palette */
+				ink: 'hsl(var(--ink))',
+				paper: 'hsl(var(--paper))',
+				tint: {
+					yellow: 'hsl(var(--tint-yellow))',
+					green: 'hsl(var(--tint-green))',
+					blue: 'hsl(var(--tint-blue))',
+					red: 'hsl(var(--tint-red))',
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
