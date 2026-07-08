@@ -1,11 +1,9 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Flame, Bug, Truck, Wind, BarChart2, Database, FileText, Smartphone, CheckCircle, MapPin, Trash2, Loader2 } from 'lucide-react';
+import { Flame, Bug, Truck, Wind, BarChart2, Database, FileText, Smartphone, CheckCircle, MapPin, Trash2 } from 'lucide-react';
 import heroImage from '@/assets/hero-image.jpg';
 import logoSquare from '@/assets/LOGO-SquareSVG.svg';
 import ScrollingBanner from '@/components/ScrollingBanner';
-
-const WEB3FORMS_KEY = '445de55d-332c-4925-8ad4-94e0daff1929';
+import StoreButtons from '@/components/StoreButtons';
 
 // Problem empathy cards — per-card colored icon boxes (matching UI_REFERENCE feature card style)
 const problemCards = [
@@ -82,8 +80,8 @@ const services = [
     title: 'Reporting App',
     description: 'Powerful tools to arrange for cleanups and report in less than 30 seconds.',
     href: '/report',
-    cta: 'Launching soon',
-    launchingSoon: true,
+    cta: 'Get the app →',
+    launchingSoon: false,
   },
   {
     icon: BarChart2,
@@ -113,30 +111,6 @@ const services = [
 
 const Index = () => {
   const navigate = useNavigate();
-  const [appEmail, setAppEmail]           = useState('');
-  const [appSubmitting, setAppSubmitting] = useState(false);
-  const [appSubmitted, setAppSubmitted]   = useState(false);
-
-  const handleAppSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!appEmail.trim()) return;
-    setAppSubmitting(true);
-    try {
-      const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_KEY,
-          subject: 'App Launch Interest — GEODHA',
-          email: appEmail,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) setAppSubmitted(true);
-    } finally {
-      setAppSubmitting(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -183,6 +157,9 @@ const Index = () => {
                   View Civic Dashboard →
                 </button>
               </div>
+
+              {/* App store buttons — the reporting app is live */}
+              <StoreButtons placement="hero" />
             </div>
 
             {/* Right: hero image + two floating badges (matching UI_REFERENCE) */}
@@ -397,7 +374,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ── REPORTING APP COMING SOON — dark section, very last, UI_REFERENCE style ── */}
+      {/* ── REPORTING APP — NOW AVAILABLE — dark section, very last, UI_REFERENCE style ── */}
       <section className="py-16 sm:py-20 bg-slate-900 relative overflow-hidden">
         {/* Subtle green tint gradient on right */}
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/10 to-transparent pointer-events-none" />
@@ -405,10 +382,10 @@ const Index = () => {
         <div className="relative container px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
-            {/* Left: copy + email form */}
+            {/* Left: copy + store buttons */}
             <div className="space-y-6">
               <span className="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary text-sm font-semibold border border-primary/30">
-                Coming Soon
+                Now Available
               </span>
               <h2
                 className="text-4xl sm:text-5xl font-bold text-white"
@@ -417,38 +394,9 @@ const Index = () => {
                 Reporting App
               </h2>
               <p className="text-xl text-slate-400 leading-relaxed max-w-lg">
-                We are currently developing the mobile app to make reporting even easier. Pre-register your interest to get early access.
+                The GEODHA app is here — report garbage issues in under 30 seconds, endorse reports in your area, and track them to resolution.
               </p>
-              {/* Email interest form */}
-              {appSubmitted ? (
-                <div className="flex items-center gap-2 text-green-400 text-sm font-semibold max-w-md">
-                  <CheckCircle className="h-5 w-5 shrink-0" />
-                  You're on the list! We'll notify you when the app launches.
-                </div>
-              ) : (
-                <form
-                  className="flex flex-col sm:flex-row gap-3 max-w-md"
-                  onSubmit={handleAppSignup}
-                >
-                  <input
-                    type="email"
-                    required
-                    value={appEmail}
-                    onChange={(e) => setAppEmail(e.target.value)}
-                    placeholder="Enter your email address"
-                    className="flex-1 px-5 py-3 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-sm"
-                  />
-                  <button
-                    type="submit"
-                    disabled={appSubmitting}
-                    className="px-6 py-3 font-bold rounded-xl text-white text-sm transition-opacity hover:opacity-90 disabled:opacity-60 flex items-center justify-center gap-2 shrink-0"
-                    style={{ background: 'var(--gradient-hero)' }}
-                  >
-                    {appSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {appSubmitting ? 'Sending…' : 'Notify Me'}
-                  </button>
-                </form>
-              )}
+              <StoreButtons placement="home_app_section" />
             </div>
 
             {/* Right: CSS phone mockup from UI_REFERENCE (no screenshots) */}
@@ -470,11 +418,11 @@ const Index = () => {
                   <p className="text-slate-400 text-sm leading-relaxed">
                     Building better communities together.
                   </p>
-                  {/* Loading bar */}
+                  {/* Progress bar — full: the app has launched */}
                   <div className="mt-8 w-full h-1 bg-slate-800 rounded-full overflow-hidden">
-                    <div className="w-2/3 h-full bg-primary rounded-full" />
+                    <div className="w-full h-full bg-primary rounded-full" />
                   </div>
-                  <p className="text-xs text-slate-500 mt-2">Launching soon...</p>
+                  <p className="text-xs text-slate-500 mt-2">Now on Android &amp; iOS</p>
                 </div>
               </div>
             </div>
