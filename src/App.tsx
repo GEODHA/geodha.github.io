@@ -6,15 +6,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import DashboardPage from "./pages/DashboardPage";
-import DataPage from "./pages/DataPage";
 import ReportPage from "./pages/ReportPage";
 import Blog from "./pages/Blog";
 import About from "./pages/About";
 import GetStarted from "./pages/GetStarted";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Navigation from "./components/Navigation";
-import TopBanner from "./components/TopBanner";
 import Footer from "./components/Footer";
+import { I18nProvider } from "./i18n";
 import NotFound from "./pages/NotFound";
 import WasteGuide from "./pages/WasteGuide";
 import BWGGuidePage from "./pages/BWGGuidePage";
@@ -45,7 +44,6 @@ const DEFAULT_TITLE = 'GEODHA — See garbage around you? Solve it with GEODHA.'
 const ROUTE_TITLES: Record<string, string> = {
   '/':            DEFAULT_TITLE,
   '/dashboard':   'Bengaluru Garbage Crisis Map — GEODHA',
-  '/data':        'Data — GEODHA',
   '/report':      'Report an Issue — GEODHA',
   '/blog':        'Blog — GEODHA',
   '/about':       'About — GEODHA',
@@ -87,15 +85,10 @@ function LegacyMapRedirect() {
   return <Navigate to="/dashboard" replace state={state} />;
 }
 
-/** Renders children only on the home page — used to gate the TopBanner. */
-function ShowOnHome({ children }: { children: React.ReactNode }) {
-  const { pathname } = useLocation();
-  return pathname === "/" ? <>{children}</> : null;
-}
-
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
+      <I18nProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -118,12 +111,12 @@ const App = () => {
               {/* ── Public routes (with Navigation + Footer) ──── */}
               <Route path="*" element={
                 <div className="min-h-screen bg-background">
-                  <ShowOnHome><TopBanner /></ShowOnHome>
                   <Navigation />
                   <Routes>
                     <Route path="/"          element={<Index />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
-                    <Route path="/data"      element={<DataPage />} />
+                    {/* /data removed — dashboard is the single data destination */}
+                    <Route path="/data"      element={<Navigate to="/dashboard" replace />} />
                     <Route path="/report"    element={<ReportPage />} />
                     <Route path="/blog"      element={<Blog />} />
                     <Route path="/map"       element={<LegacyMapRedirect />} />
@@ -143,6 +136,7 @@ const App = () => {
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>
+      </I18nProvider>
     </QueryClientProvider>
   );
 };

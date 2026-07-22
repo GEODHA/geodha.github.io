@@ -80,11 +80,11 @@ const ORGS: Org[] = [
 function ActionBtn({ action }: { action: OrgAction }) {
   const isEmail = action.type === 'email';
 
-  const base = 'inline-flex items-center gap-1.5 text-sm font-semibold rounded-lg px-4 py-2 transition-opacity hover:opacity-85 no-underline';
+  const base = 'inline-flex items-center gap-1.5 text-sm font-bold rounded-full px-4 py-2 border-2 border-ink transition-opacity hover:opacity-85 no-underline';
   const variant: Record<OrgAction['type'], string> = {
     primary:   'bg-primary text-primary-foreground',
-    secondary: 'border border-primary text-primary bg-transparent',
-    email:     'border border-border text-foreground bg-transparent',
+    secondary: 'bg-paper text-foreground',
+    email:     'bg-tint-yellow text-foreground',
   };
 
   return (
@@ -109,43 +109,65 @@ export default function VolunteerPage() {
     <div className="min-h-screen bg-background">
 
       {/* ── PAGE HEADER ─────────────────────────────────────────────────────── */}
-      <section className="bg-muted/40 border-b border-border py-10 sm:py-14">
+      <section className="bg-paper border-b-[3px] border-ink py-10 sm:py-14">
         <div className="container px-4 sm:px-6 lg:px-8 max-w-3xl">
-          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
-            Community Action · Bengaluru
-          </p>
-          <h1
-            className="text-4xl sm:text-5xl font-bold text-foreground mb-3"
-            style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
-          >
+          <p className="mono-label mb-3">Community action · Bengaluru</p>
+          <h1 className="text-4xl sm:text-5xl font-black tracking-[-0.03em] mb-3">
             🧹 Volunteer for Cleanups
           </h1>
-          <p className="text-muted-foreground max-w-xl text-base">
+          <p className="text-foreground/70 font-medium max-w-xl text-base">
             Organisations operating in Bengaluru running regular cleanup drives.
             Pick the one that fits how you want to show up.
           </p>
         </div>
       </section>
 
+      {/* ── KARMANA — city-wide civic events calendar ───────────────────────── */}
+      <section className="pt-12">
+        <div className="container px-4 sm:px-6 lg:px-8 max-w-3xl">
+          <div
+            className="bg-tint-blue border-[3px] border-ink rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center gap-5"
+            style={{ boxShadow: 'var(--shadow-offset-4)' }}
+          >
+            <div className="flex-1">
+              <p className="mono-label text-accent mb-1.5">Upcoming events</p>
+              <h2 className="text-xl font-extrabold mb-1.5">Find civic events across the city</h2>
+              <p className="text-sm font-medium text-foreground/70 leading-relaxed">
+                Karmana shares all the civic activities and events happening in
+                Bengaluru that anyone can join — cleanups, audits, walks and more.
+              </p>
+            </div>
+            <a
+              href="https://karmana.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-poster shrink-0 inline-flex items-center justify-center gap-2 bg-accent text-white text-sm"
+            >
+              Explore karmana.in ↗
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ── ORG CARDS ──────────────────────────────────────────────────────── */}
       <section className="py-12">
-        <div className="container px-4 sm:px-6 lg:px-8 max-w-3xl flex flex-col gap-5">
+        <div className="container px-4 sm:px-6 lg:px-8 max-w-3xl flex flex-col gap-6">
           {ORGS.map((org) => (
             <div
               key={org.id}
-              className="bg-card border border-border rounded-2xl p-6 sm:p-7 border-l-4"
-              style={{ borderLeftColor: 'hsl(var(--primary))' }}
+              className="bg-paper border-[3px] border-ink rounded-2xl p-6 sm:p-7"
+              style={{ boxShadow: 'var(--shadow-offset-4)' }}
             >
               {/* Header */}
               <div className="flex items-start gap-3 mb-3">
-                <span className="bg-primary/10 text-primary text-[11px] font-bold rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                  style={{ minWidth: 24, height: 24 }}>
+                <span className="bg-secondary border-2 border-ink text-ink text-[11px] font-black rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                  style={{ minWidth: 26, height: 26 }}>
                   {org.id}
                 </span>
                 <div>
                   <h2
                     className="text-xl font-bold text-foreground leading-tight mb-1"
-                    style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1.35rem' }}
+                    style={{ fontFamily: "'Archivo', sans-serif", fontSize: '1.35rem' }}
                   >
                     {org.name}
                   </h2>

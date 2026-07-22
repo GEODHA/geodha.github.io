@@ -3,8 +3,10 @@ import {
   CheckCircle, ChevronDown, ChevronUp,
   FileText, Phone, Users, HeartHandshake, Lightbulb,
   Shield, MessageCircle, Layers, Loader2,
-  Upload, X, ImageIcon,
+  Upload, X, ImageIcon, Smartphone,
 } from 'lucide-react';
+import StoreButtons from '@/components/StoreButtons';
+import { WHATSAPP_COMMUNITY_URL } from '@/config/community';
 import { Link } from 'react-router-dom';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { signInAnonymously } from 'firebase/auth';
@@ -295,7 +297,7 @@ const ReportPage = () => {
           </div>
           <h2
             className="text-3xl font-bold text-foreground mb-3"
-            style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
+            style={{ fontFamily: "'Archivo', sans-serif" }}
           >
             Report received
           </h2>
@@ -304,7 +306,7 @@ const ReportPage = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-3">
             <a
-              href="https://chat.whatsapp.com/GI1fXzsl1rDArxHbn7bfAT"
+              href={WHATSAPP_COMMUNITY_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#25D366] text-white text-md font-semibold rounded-md hover:bg-[#1ebe5d] transition-colors"
@@ -334,12 +336,9 @@ const ReportPage = () => {
     <div className="min-h-screen bg-background">
 
       {/* Page header */}
-      <div className="border-b border-border bg-card">
+      <div className="border-b-[3px] border-ink bg-paper">
         <div className="container px-4 sm:px-6 lg:px-8 py-8">
-          <h1
-            className="text-4xl font-bold text-foreground mb-3"
-            style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
-          >
+          <h1 className="text-4xl font-black tracking-[-0.02em] text-foreground mb-3">
             Report a Problem
           </h1>
           <p className="text-muted-foreground leading-relaxed max-w-2xl">
@@ -490,14 +489,11 @@ const ReportPage = () => {
       </div>
 
       {/* ── ACTION CARDS SECTION ── */}
-      <section className="py-12 sm:py-16 bg-muted/40 border-t border-border">
+      <section className="py-10 sm:py-12 bg-muted/40 border-t-[3px] border-ink">
         <div className="container px-4 sm:px-6 lg:px-8">
 
-          <div className="mb-10">
-            <h2
-              className="text-3xl sm:text-4xl font-bold text-foreground mb-3"
-              style={{ fontFamily: "'Barlow Condensed', sans-serif" }}
-            >
+          <div className="mb-8">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-[-0.02em] text-foreground mb-3">
               What can you do about it?
             </h2>
             <p className="text-muted-foreground max-w-2xl">
@@ -505,14 +501,33 @@ const ReportPage = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* GEODHA app — first action card */}
+            <div
+              className="bg-tint-green rounded-2xl border-[3px] border-ink p-5 flex flex-col"
+              style={{ boxShadow: 'var(--shadow-offset-4)' }}
+            >
+              <div className="w-10 h-10 rounded-lg bg-primary border-2 border-ink flex items-center justify-center mb-3 shrink-0">
+                <Smartphone className="h-5 w-5 text-white" />
+              </div>
+              <h3 className="font-extrabold text-foreground mb-1.5 leading-snug" style={{ fontSize: '1.1rem' }}>
+                Report with the GEODHA app
+              </h3>
+              <p className="text-sm text-foreground/70 leading-relaxed mb-4 flex-1">
+                The fastest route: photo + GPS in under 30 seconds, straight onto
+                the public map — with escalation guidance built in.
+              </p>
+              <StoreButtons placement="report_page" size="sm" />
+            </div>
+
             {actionCards.map((card) => {
               const isExpanded = expandedCards.has(card.id);
               const Icon = card.icon;
               return (
                 <div
                   key={card.id}
-                  className="bg-card rounded-xl border border-border p-5 flex flex-col hover:border-primary/30 hover:shadow-soft transition-all duration-200"
+                  className="bg-paper rounded-2xl border-[3px] border-ink p-5 flex flex-col transition-transform hover:-translate-y-0.5"
+                  style={{ boxShadow: 'var(--shadow-offset-4)' }}
                 >
                   <div className={`w-10 h-10 rounded-lg ${card.iconBg} flex items-center justify-center mb-3 shrink-0`}>
                     <Icon className={`h-5 w-5 ${card.iconColor}`} />
@@ -520,7 +535,7 @@ const ReportPage = () => {
 
                   <h3
                     className="font-bold text-foreground mb-1.5 leading-snug"
-                    style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: '1.1rem' }}
+                    style={{ fontFamily: "'Archivo', sans-serif", fontSize: '1.1rem' }}
                   >
                     {card.title}
                   </h3>
@@ -533,7 +548,7 @@ const ReportPage = () => {
                     card.href?.startsWith('/') ? (
                       <Link
                         to={card.href}
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg bg-green-100 text-green-800 hover:bg-green-200 transition-colors w-fit"
+                        className="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-full border-2 border-ink bg-tint-green text-foreground hover:bg-primary hover:text-white transition-colors w-fit"
                       >
                         <Icon className="h-3.5 w-3.5" />
                         {card.ctaText}
@@ -543,7 +558,7 @@ const ReportPage = () => {
                         href={card.href}
                         target={card.href?.startsWith('tel:') ? undefined : '_blank'}
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg bg-green-100 text-green-800 hover:bg-green-200 transition-colors w-fit"
+                        className="inline-flex items-center gap-1.5 text-sm font-bold px-4 py-2 rounded-full border-2 border-ink bg-tint-green text-foreground hover:bg-primary hover:text-white transition-colors w-fit"
                       >
                         <Icon className="h-3.5 w-3.5" />
                         {card.ctaText}

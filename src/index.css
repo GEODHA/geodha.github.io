@@ -5,41 +5,53 @@
 @tailwind components;
 @tailwind utilities;
 
-/* GEODHA Design System — Civic engagement and environmental theme */
+/* GEODHA Design System — "street-poster" language from the GEODHA UI Kit:
+   white surfaces, solid ink outlines, chunky offset shadows, and
+   yellow / green / blue accents. Fonts: Archivo (+ Space Mono labels). */
 
 @layer base {
   :root {
-    --background: 0 0% 99%;
-    --foreground: 147 16% 12%;
+    /* Kit palette: bg #EDEDEA · ink #161614 · green #1FA75C · yellow #FFCE2B
+       blue #2C7BE5 · alert #E5484D · tints #FFF6D6 #E7F6EE #E5EFFD #FDE4E5 */
+    --background: 60 8% 92%;
+    --foreground: 60 4% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 147 16% 12%;
+    --card-foreground: 60 4% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 147 16% 12%;
+    --popover-foreground: 60 4% 8%;
 
-    --primary: 147 78% 35%;
-    --primary-foreground: 0 0% 98%;
-    --primary-glow: 147 65% 45%;
+    --primary: 147 69% 39%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 147 60% 47%;
 
-    --secondary: 147 20% 95%;
-    --secondary-foreground: 147 16% 12%;
+    --secondary: 46 100% 58%;
+    --secondary-foreground: 60 4% 8%;
 
-    --muted: 147 15% 96%;
-    --muted-foreground: 147 10% 45%;
+    --muted: 60 8% 95%;
+    --muted-foreground: 60 2% 41%;
 
-    --accent: 210 85% 52%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 214 78% 54%;
+    --accent-foreground: 0 0% 100%;
 
-    --warning: 35 95% 58%;
-    --warning-foreground: 0 0% 98%;
+    --warning: 46 100% 58%;
+    --warning-foreground: 60 4% 8%;
 
-    --destructive: 0 85% 60%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 358 75% 59%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 147 30% 91%;
-    --input: 147 30% 94%;
-    --ring: 147 78% 35%;
+    --border: 60 5% 80%;
+    --input: 60 5% 84%;
+    --ring: 147 69% 39%;
+
+    /* Poster-language tokens */
+    --ink: 60 4% 8%;
+    --paper: 0 0% 100%;
+    --tint-yellow: 46 100% 92%;
+    --tint-green: 147 43% 94%;
+    --tint-blue: 214 86% 95%;
+    --tint-red: 358 71% 94%;
 
     /* Custom GEODHA tokens */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
@@ -49,9 +61,14 @@
     --shadow-soft: 0 4px 24px -8px hsl(var(--primary) / 0.15);
     --shadow-glow: 0 0 32px hsl(var(--primary-glow) / 0.3);
 
+    /* Kit elevation: hard offset shadows, no blur (FLAT · RAISED · LIFTED) */
+    --shadow-offset-3: 3px 3px 0 hsl(var(--ink));
+    --shadow-offset-4: 4px 4px 0 hsl(var(--ink));
+    --shadow-offset-6: 6px 6px 0 hsl(var(--ink));
+
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -114,12 +131,78 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Archivo', 'Noto Sans Kannada', ui-sans-serif, system-ui, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Barlow Condensed', ui-sans-serif, system-ui, sans-serif;
-    letter-spacing: -0.01em;
+    font-family: 'Archivo', 'Noto Sans Kannada', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ── Poster-language utilities (GEODHA UI Kit) ─────────────────────────────── */
+
+@layer components {
+  /* Card: white surface, 3px ink outline, lifted offset shadow */
+  .card-poster {
+    background: hsl(var(--paper));
+    border: 3px solid hsl(var(--ink));
+    border-radius: 18px;
+    box-shadow: var(--shadow-offset-6);
+  }
+
+  /* Pill button: 3px outline, raised offset shadow, weight 800 */
+  .btn-poster {
+    border: 3px solid hsl(var(--ink));
+    border-radius: 30px;
+    padding: 13px 26px;
+    font-weight: 800;
+    box-shadow: var(--shadow-offset-4);
+    transition: box-shadow 120ms ease, transform 120ms ease;
+  }
+  .btn-poster:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 hsl(var(--ink));
+  }
+
+  /* Filter chip / status pill: 2–2.5px outline, pill radius */
+  .chip-poster {
+    border: 2.5px solid hsl(var(--ink));
+    border-radius: 30px;
+    padding: 9px 16px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* Space Mono overline label, e.g. "INDIRANAGAR · 2H AGO" */
+  .mono-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Dashed ink divider */
+  .divider-poster {
+    height: 2px;
+    background: repeating-linear-gradient(90deg, hsl(var(--ink)), hsl(var(--ink)) 7px, transparent 7px, transparent 14px);
+  }
+
+  /* Yellow diagonal-stripe surface (hero right panel) */
+  .bg-stripes-yellow {
+    background: repeating-linear-gradient(45deg, #FFCE2B, #FFCE2B 22px, #FFD95A 22px, #FFD95A 44px);
+  }
+
+  /* Blue "blueprint grid" surface (app section) */
+  .bg-blueprint {
+    background-color: hsl(var(--accent));
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+    background-size: 34px 34px;
   }
 }
 
@@ -138,4 +221,12 @@
 /* Animation utility classes */
 .animate-scroll {
   animation: scroll 30s linear infinite;
+}
+
+/* Slow rotation — hero globe */
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 90s linear infinite;
 }

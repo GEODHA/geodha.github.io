@@ -339,7 +339,7 @@ function SectionLabel({ children }: { children: string }) {
 function SectionTitle({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <h2
-      style={{ fontFamily: "'Barlow Condensed', sans-serif", color: C.text, ...style }}
+      style={{ fontFamily: "'Archivo', sans-serif", color: C.text, ...style }}
       className="text-[28px] sm:text-[36px] font-bold leading-tight tracking-tight mb-2"
     >
       {children}
@@ -501,7 +501,7 @@ export default function WasteGuide() {
           SWM 2026 · Updated April 2026
         </span>
         <h1
-          style={{ fontFamily: "'Barlow Condensed', sans-serif", color: C.white, lineHeight: 1.05, letterSpacing: '-1px' }}
+          style={{ fontFamily: "'Archivo', sans-serif", color: C.white, lineHeight: 1.05, letterSpacing: '-1px' }}
           className="relative text-[clamp(32px,7vw,54px)] font-bold mb-4"
         >
           Bengaluru's waste<br />
@@ -644,7 +644,7 @@ export default function WasteGuide() {
                       <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: s.labelColor, marginBottom: 4 }}>
                         {bin.label}
                       </div>
-                      <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px', color: s.nameColor, marginBottom: 8 }}>
+                      <div style={{ fontFamily: "'Archivo', sans-serif", fontSize: 22, fontWeight: 700, letterSpacing: '-0.3px', color: s.nameColor, marginBottom: 8 }}>
                         {bin.name}
                         {bin.subtitle && <span style={{ fontWeight: 300, fontSize: 16 }}> {bin.subtitle}</span>}
                         {bin.badge && (
@@ -743,7 +743,7 @@ export default function WasteGuide() {
 
           {/* ── BIN COLOUR REFERENCE ─────────────────────────────────────────── */}
           <div style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 14, marginTop: 28 }} className="p-5 sm:p-6">
-            <h3 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 4 }}>
+            <h3 style={{ fontFamily: "'Archivo', sans-serif", fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 4 }}>
               Don't mix up the bin colours.
             </h3>
             <p style={{ fontSize: 13.5, color: C.textSec, marginBottom: 16, lineHeight: 1.55 }}>
