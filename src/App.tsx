@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Index from "./pages/Index";
 import DashboardPage from "./pages/DashboardPage";
-import DataPage from "./pages/DataPage";
 import ReportPage from "./pages/ReportPage";
 import Blog from "./pages/Blog";
 import About from "./pages/About";
@@ -45,7 +44,6 @@ const DEFAULT_TITLE = 'GEODHA — See garbage around you? Solve it with GEODHA.'
 const ROUTE_TITLES: Record<string, string> = {
   '/':            DEFAULT_TITLE,
   '/dashboard':   'Bengaluru Garbage Crisis Map — GEODHA',
-  '/data':        'Data — GEODHA',
   '/report':      'Report an Issue — GEODHA',
   '/blog':        'Blog — GEODHA',
   '/about':       'About — GEODHA',
@@ -117,7 +115,8 @@ const App = () => {
                   <Routes>
                     <Route path="/"          element={<Index />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
-                    <Route path="/data"      element={<DataPage />} />
+                    {/* /data removed — dashboard is the single data destination */}
+                    <Route path="/data"      element={<Navigate to="/dashboard" replace />} />
                     <Route path="/report"    element={<ReportPage />} />
                     <Route path="/blog"      element={<Blog />} />
                     <Route path="/map"       element={<LegacyMapRedirect />} />

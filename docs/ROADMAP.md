@@ -171,8 +171,19 @@ is already hard-coded in `Hero.tsx`; App Store URL unknown).
 > — TODO wire real count). FourElements on About rebuilt as "drag to restore"
 > reveal cards (reality⇄ideal wipe, red/green status pill), using old image
 > sets 2 (ideal) & 3 (reality); set 1 images now unused.
-> REMAINING per-page propagation: About (rest), Data, Report, Guides,
-> Volunteer, Dashboard chrome, Blog frame + items 2–4 below.
+> REMAINING per-page propagation: Report, Guides (WasteGuide/BWG), Privacy,
+> Dashboard chrome, HowItWorks component + items 2–4 below.
+>
+> UPDATE 2026-07-08: homepage REPLACED by a simple narrative landing page
+> (Mission → Problem carousel → Solutions [app screenshots carousel +
+> locked live DashboardPreview] → stats [150+/100+/~10] → Blog/Guide/Volunteer
+> cards → Contribute CTA; "Data for Action…" marquee). New components:
+> SimpleCarousel, DashboardPreview; new config src/config/community.ts
+> (WHATSAPP_COMMUNITY_URL placeholder — button hidden until set). Problem
+> photos auto-load from src/assets/problem/. Landing strings are English-only
+> (TODO i18n). Data page DELETED (/data now redirects to /dashboard; nav +
+> footer links removed). FourElements = single-toggle v3. Volunteer page:
+> poster styles + karmana.in events block. About: poster card pass done.
 
 Rebuild `Index.tsx` (+ Navigation/Footer) to match the mockups. The mockup
 content is PLACEHOLDER — real-content mapping decided below. Reuse the

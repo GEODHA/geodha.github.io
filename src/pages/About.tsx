@@ -9,7 +9,7 @@ const About = () => {
     <div className="min-h-screen bg-background">
 
       {/* Hero Section */}
-      <section className="py-16 bg-gradient-subtle">
+      <section className="py-10 bg-gradient-subtle">
         <div className="container px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-6 max-w-4xl mx-auto">
             <h1
@@ -17,7 +17,7 @@ const About = () => {
               style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               About{" "}
-              <span className="bg-gradient-primary bg-clip-text text-transparent">
+              <span className="text-primary">
                 GEODHA
               </span>
             </h1>
@@ -32,27 +32,27 @@ const About = () => {
       <FourElements />
 
       {/* What does GEODHA aim to do? */}
-      <section className="py-16 bg-muted/40">
+      <section className="py-10 bg-muted/40">
         <div className="container px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4 mb-16">
+          <div className="text-center space-y-3 mb-8">
             <h2
-              className="text-3xl sm:text-4xl font-bold"
+              className="text-3xl sm:text-4xl font-black tracking-[-0.02em]"
               style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               What does GEODHA{" "}
-              <span className="bg-gradient-primary bg-clip-text text-transparent">
+              <span className="text-primary">
                 aim to do?
               </span>
             </h2>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+          <div className="grid lg:grid-cols-2 gap-8 items-center mb-8">
             <div className="space-y-6">
               <p className="text-lg text-muted-foreground leading-relaxed">
                 Engage communities to submit reports of problems they are facing, create maps of the reports to raise awareness on big problems, and facilitate data analytics towards solving these challenges.
               </p>
 
-              <div className="bg-gradient-subtle p-6 rounded-xl border">
+              <div className="bg-tint-yellow p-6 rounded-2xl border-[3px] border-ink" style={{ boxShadow: 'var(--shadow-offset-4)' }}>
                 <div className="flex items-start space-x-3">
                   <Target className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
                   <div>
@@ -66,10 +66,10 @@ const About = () => {
             </div>
 
             <div className="grid gap-6">
-              <Card className="border-0 shadow-soft">
+              <Card className="border-[3px] border-ink rounded-2xl" style={{ boxShadow: 'var(--shadow-offset-4)' }}>
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className="h-12 w-12 rounded-lg bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                    <div className="h-12 w-12 rounded-xl bg-primary border-[2.5px] border-ink flex items-center justify-center flex-shrink-0">
                       <Target className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -82,10 +82,10 @@ const About = () => {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-soft">
+              <Card className="border-[3px] border-ink rounded-2xl" style={{ boxShadow: 'var(--shadow-offset-4)' }}>
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className="h-12 w-12 rounded-lg bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                    <div className="h-12 w-12 rounded-xl bg-primary border-[2.5px] border-ink flex items-center justify-center flex-shrink-0">
                       <BarChart3 className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -98,10 +98,10 @@ const About = () => {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-soft">
+              <Card className="border-[3px] border-ink rounded-2xl" style={{ boxShadow: 'var(--shadow-offset-4)' }}>
                 <CardContent className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className="h-12 w-12 rounded-lg bg-gradient-primary flex items-center justify-center flex-shrink-0">
+                    <div className="h-12 w-12 rounded-xl bg-primary border-[2.5px] border-ink flex items-center justify-center flex-shrink-0">
                       <Users className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -121,11 +121,11 @@ const About = () => {
       <HowItWorks />
 
       {/* How You Can Help Section */}
-      <section className="py-16 bg-background">
+      <section className="py-10 bg-background">
         <div className="container px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4 mb-16">
+          <div className="text-center space-y-3 mb-8">
             <h2
-              className="text-3xl sm:text-4xl font-bold"
+              className="text-3xl sm:text-4xl font-black tracking-[-0.02em]"
               style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               How can you help?
@@ -138,7 +138,7 @@ const About = () => {
                 <strong>Spread the word!</strong> We are developing an app for everyone to submit reports of community challenges and view statistics for their community on waste management issues such as open dumps and littering. In the future we aim to track other civic issues like delayed construction, broken footpaths, dirty water, electricity blackouts, air quality, and more.
               </p>
             </div>
-            <div className="bg-card p-8 rounded-xl border shadow-soft">
+            <div className="bg-paper p-8 rounded-2xl border-[3px] border-ink" style={{ boxShadow: 'var(--shadow-offset-6)' }}>
               <h3 className="text-2xl font-bold mb-6 text-center">Potential Applications &amp; Impact</h3>
               <ul className="space-y-4">
                 {[
@@ -159,11 +159,11 @@ const About = () => {
       </section>
 
       {/* Join Our Team Section */}
-      <section className="py-16 bg-muted/40">
+      <section className="py-10 bg-muted/40">
         <div className="container px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4 mb-16">
+          <div className="text-center space-y-3 mb-8">
             <h2
-              className="text-3xl sm:text-4xl font-bold"
+              className="text-3xl sm:text-4xl font-black tracking-[-0.02em]"
               style={{ fontFamily: "'Archivo', sans-serif" }}
             >
               Join Our Team
@@ -175,7 +175,7 @@ const About = () => {
 
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-2 gap-8 mb-12">
-              <Card className="border-0 shadow-soft">
+              <Card className="border-[3px] border-ink rounded-2xl" style={{ boxShadow: 'var(--shadow-offset-4)' }}>
                 <CardContent className="p-8 text-center">
                   <h3 className="text-xl font-bold mb-4">We're looking for:</h3>
                   <ul className="space-y-3 text-muted-foreground">
@@ -186,7 +186,7 @@ const About = () => {
                 </CardContent>
               </Card>
 
-              <Card className="border-0 shadow-soft">
+              <Card className="border-[3px] border-ink rounded-2xl" style={{ boxShadow: 'var(--shadow-offset-4)' }}>
                 <CardContent className="p-8 text-center">
                   <h3 className="text-xl font-bold mb-6">Contact Us</h3>
                   <div className="space-y-4">
@@ -223,7 +223,7 @@ const About = () => {
               <p className="text-muted-foreground mb-6">
                 Follow us on social media for updates and join the discussion about civic engagement!
               </p>
-              <div className="bg-gradient-primary/10 p-8 rounded-xl border">
+              <div className="bg-tint-green p-8 rounded-2xl border-[3px] border-ink" style={{ boxShadow: 'var(--shadow-offset-6)' }}>
                 <p className="text-lg mb-4">
                   <strong>Want to bring GEODHA to your city or contribute to our mission?</strong>
                 </p>

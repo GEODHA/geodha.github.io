@@ -222,3 +222,11 @@
 .animate-scroll {
   animation: scroll 30s linear infinite;
 }
+
+/* Slow rotation — hero globe */
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin-slow 90s linear infinite;
+}
