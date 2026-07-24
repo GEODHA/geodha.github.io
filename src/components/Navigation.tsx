@@ -27,7 +27,7 @@ const Navigation = () => {
 
   return (
     <nav className="sticky top-0 z-[2000] w-full bg-paper border-b-[3px] border-ink">
-      <div className="container flex h-16 items-center gap-2 sm:gap-4">
+      <div className="container flex h-16 items-center gap-1 sm:gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center shrink-0 group" onClick={() => window.scrollTo(0, 0)}>
           <img
@@ -40,13 +40,13 @@ const Navigation = () => {
         </Link>
 
         {/* City & Language selectors */}
-        <div className="flex items-center gap-1 ml-1">
+        <div className="flex items-center gap-0.5 sm:gap-1 ml-1 min-w-0">
           {/* City selector */}
-          <div className="relative group">
-            <button className="flex items-center gap-1 text-sm font-bold text-foreground/70 hover:text-foreground px-2 py-1 rounded transition-colors">
+          <div className="relative group min-w-0">
+            <button className="flex items-center gap-1 text-xs sm:text-sm font-bold text-foreground/70 hover:text-foreground px-1.5 sm:px-2 py-1 rounded transition-colors">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span>{t.nav.city}</span>
-              <ChevronDown className="h-3 w-3" />
+              <span className="truncate">{t.nav.city}</span>
+              <ChevronDown className="h-3 w-3 shrink-0" />
             </button>
             <div className="absolute top-full left-0 mt-2 w-52 rounded-xl border-2 border-ink bg-paper opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50" style={{ boxShadow: 'var(--shadow-offset-3)' }}>
               <div className="p-2">
@@ -66,13 +66,13 @@ const Navigation = () => {
           <div className="w-px h-4 bg-border" />
 
           {/* Language selector — functional (English / ಕನ್ನಡ) */}
-          <div className="relative group">
-            <button className="flex items-center gap-1.5 text-sm font-bold text-foreground/70 hover:text-foreground px-2 py-1 rounded transition-colors" aria-label={t.nav.language}>
+          <div className="relative group shrink-0">
+            <button className="flex items-center gap-1.5 text-sm font-bold text-foreground/70 hover:text-foreground px-1.5 sm:px-2 py-1 rounded transition-colors" aria-label={t.nav.language}>
               <Languages className="h-4 w-4" />
               <span className="hidden sm:inline text-xs font-mono font-bold uppercase">{locale}</span>
               <ChevronDown className="h-3 w-3" />
             </button>
-            <div className="absolute top-full left-0 mt-2 w-44 rounded-xl border-2 border-ink bg-paper opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50" style={{ boxShadow: 'var(--shadow-offset-3)' }}>
+            <div className="absolute top-full right-0 mt-2 w-44 rounded-xl border-2 border-ink bg-paper opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50" style={{ boxShadow: 'var(--shadow-offset-3)' }}>
               <div className="p-2">
                 {LOCALES.map((l) => (
                   <button
@@ -124,7 +124,7 @@ const Navigation = () => {
 
         {/* Mobile hamburger */}
         <button
-          className="md:hidden ml-auto p-2 rounded-lg border-2 border-ink text-foreground"
+          className="md:hidden shrink-0 ml-auto p-1.5 sm:p-2 rounded-lg border-2 border-ink text-foreground"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           aria-label="Toggle menu"
         >
