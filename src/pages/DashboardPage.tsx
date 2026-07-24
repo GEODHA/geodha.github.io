@@ -689,7 +689,10 @@ function BbmpStatusCard({ report }: { report: Report }) {
         </p>
       )}
 
-      {sahaaya?.staffRemarks && (
+      {/* Interim remarks (e.g. "1st Assignment Based on Ward Mapping") aren't
+          real updates — they're re-polled unchanged until BBMP closes the
+          complaint, so only show remarks once that's actually happened. */}
+      {officiallyClosed && sahaaya?.staffRemarks && (
         <div className={`text-xs ${tone.text} leading-relaxed`}>
           <p className="font-semibold">
             BBMP remarks{remarkDate ? ` · ${format(remarkDate, 'd MMM yyyy')}` : ''}

@@ -45,7 +45,7 @@ const Navigation = () => {
           <div className="relative group">
             <button className="flex items-center gap-1 text-sm font-bold text-foreground/70 hover:text-foreground px-2 py-1 rounded transition-colors">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden xs:inline sm:inline">{t.nav.city}</span>
+              <span>{t.nav.city}</span>
               <ChevronDown className="h-3 w-3" />
             </button>
             <div className="absolute top-full left-0 mt-2 w-52 rounded-xl border-2 border-ink bg-paper opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50" style={{ boxShadow: 'var(--shadow-offset-3)' }}>
