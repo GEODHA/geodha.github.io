@@ -52,6 +52,14 @@ interface Props {
   /** Live GEODHA app reports — shown as pins when zoomed into a ward. */
   appReports?:         AppReportPin[];
   onReportSelect?:     (reportId: string) => void;
+  /**
+   * 'stats' (default) — full choropleth + zoom crossfade between ward-level
+   * problem icons and app-report pins, exactly as today.
+   * 'reports' — simplified view: ward outlines only (no fill), no problem
+   * icons, no testimonial badges, no zoom-driven crossfade — app-report pins
+   * are just always visible. Mirrors the pre-merge /map page.
+   */
+  mode?: 'stats' | 'reports';
 }
 
 // ── Zoom crossfade (ward icons ⇄ app report pins) ────────────────────────────
@@ -72,9 +80,11 @@ function crossfadeT(zoom: number): number {
  * level. Rendered as the FIRST child of MapContainer so the panes exist
  * before any marker that targets them is added.
  */
-function MapSetup({ onReady, onCrossfade }: {
-  onReady:      () => void;
-  onCrossfade?: (t: number) => void;
+function MapSetup({ onReady, onCrossfade, crossfadeEnabled = true }: {
+  onReady:           () => void;
+  onCrossfade?:      (t: number) => void;
+  /** false in 'reports' mode — app-report pins are just always shown. */
+  crossfadeEnabled?: boolean;
 }) {
   const map = useMap();
 
@@ -83,6 +93,19 @@ function MapSetup({ onReady, onCrossfade }: {
     const reportPane = map.getPane(APP_REPORTS_PANE) ?? map.createPane(APP_REPORTS_PANE);
     wardPane.style.zIndex   = '620';
     reportPane.style.zIndex = '640';
+
+    if (!crossfadeEnabled) {
+      // Reports-only mode: no ward icons are ever rendered into wardPane, and
+      // app-report pins should always be fully visible — skip the zoom-driven
+      // opacity logic entirely.
+      wardPane.style.opacity      = '0';
+      wardPane.style.visibility   = 'hidden';
+      reportPane.style.opacity    = '1';
+      reportPane.style.visibility = 'visible';
+      onReady();
+      return;
+    }
+
     for (const pane of [wardPane, reportPane]) {
       pane.style.transition = 'opacity 300ms ease, visibility 300ms ease';
     }
@@ -101,7 +124,7 @@ function MapSetup({ onReady, onCrossfade }: {
     onReady();
     return () => { map.off('zoomend', apply); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map]);
+  }, [map, crossfadeEnabled]);
 
   return null;
 }
@@ -186,7 +209,8 @@ function ZoomController({ wardNum }: { wardNum: number }) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimonialMarkers = [], appReports = [], onReportSelect }: Props) => {
+const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimonialMarkers = [], appReports = [], onReportSelect, mode = 'stats' }: Props) => {
+  const reportsOnly = mode === 'reports';
   const geoJsonRef = useRef<L.GeoJSON | null>(null);
 
   // Crossfade state — panes must exist before pane-targeted markers render.
@@ -246,6 +270,14 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
 
   // GeoJSON styling
   const styleFeature = (feature?: GeoJSON.Feature): PathOptions => {
+    if (reportsOnly) {
+      // Ward outlines only — no fill, no severity coloring.
+      return {
+        fillOpacity: 0,
+        color:       'rgba(26,26,20,0.4)',
+        weight:      1,
+      };
+    }
     const props      = feature?.properties as WardFeatureProperties | undefined;
     const num        = props?.ward_num ?? 0;
     const ward       = wardDataMap[num];
@@ -262,6 +294,8 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
   };
 
   const onEachFeature = (feature: GeoJSON.Feature, layer: Layer) => {
+    // Reports-only mode: outlines are visual context only — no tooltip/click.
+    if (reportsOnly) return;
     const props = feature.properties as WardFeatureProperties;
     const num   = props.ward_num;
     const ward  = wardDataMap[num];
@@ -312,7 +346,7 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
       />
 
       {/* Panes + zoom crossfade driver — must precede pane-targeted markers */}
-      <MapSetup onReady={() => setPanesReady(true)} onCrossfade={setFadeT} />
+      <MapSetup onReady={() => setPanesReady(true)} onCrossfade={setFadeT} crossfadeEnabled={!reportsOnly} />
 
       {zoomToWard != null && <ZoomController wardNum={zoomToWard} />}
 
@@ -326,8 +360,9 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
       />
 
       {/* Ward cluster markers: problem icons + testimonial badge (merged).
-          Rendered in the ward-icons pane so they fade out on zoom-in. */}
-      {panesReady && docMarkers.map(({ wardNum, latlng, icons }) => (
+          Rendered in the ward-icons pane so they fade out on zoom-in.
+          Hidden entirely in reports-only mode. */}
+      {!reportsOnly && panesReady && docMarkers.map(({ wardNum, latlng, icons }) => (
         <Marker
           key={`prob-${wardNum}`}
           position={latlng}
@@ -352,8 +387,8 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
       {/* Exact-location markers — negative (red !) and positive (green ✓).
           Same pane as the ward icons so (a) zIndexOffset stacks them ON TOP of
           the top-affected icon clusters, and (b) they crossfade out together
-          when zooming into app-report view. */}
-      {panesReady && testimonialMarkers.filter((m) => m.isExact).map((m) => (
+          when zooming into app-report view. Hidden in reports-only mode. */}
+      {!reportsOnly && panesReady && testimonialMarkers.filter((m) => m.isExact).map((m) => (
         <Marker
           key={`te-${m.id}`}
           position={m.latlng}

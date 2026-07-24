@@ -17,7 +17,7 @@ import type { AppReportPin, AppReportStatus } from '@/components/AppReportsLayer
 import { useFetchReports } from '@/hooks/useFetchReports';
 import { initializeAuth } from '@/lib/firebase';
 import type { Report } from '@/services/reportsService';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, format, differenceInCalendarDays } from 'date-fns';
 import { ThumbsUp } from 'lucide-react';
 
 // ── Shared ward-boundary geometry helpers ─────────────────────────────────────
@@ -757,7 +757,26 @@ function ReportSheet({ report, onClose }: { report: Report; onClose: () => void 
 
 // ── Map legend ────────────────────────────────────────────────────────────────
 
-function MapLegend() {
+function MapLegend({ mode = 'stats' }: { mode?: 'stats' | 'reports' }) {
+  if (mode === 'reports') {
+    return (
+      <div className="flex items-center gap-0.5 flex-wrap text-[10px] text-gray-500">
+        <span className="flex items-center gap-1 mr-2">
+          <span className="inline-block h-2.5 w-4 rounded-sm border border-gray-400" style={{ background: 'transparent' }} />
+          Ward boundary
+        </span>
+        <span className="flex items-center gap-1 ml-1 pl-2 border-l border-gray-200">
+          <span className="inline-flex gap-0.5">
+            <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#ef4444' }} />
+            <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#eab308' }} />
+            <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#22c55e' }} />
+          </span>
+          <span>App reports</span>
+        </span>
+      </div>
+    );
+  }
+
   const bands: BandLevel[] = [1, 2, 3, 4, 5];
   return (
     <div className="flex items-center gap-0.5 flex-wrap text-[10px] text-gray-500">
@@ -786,6 +805,28 @@ function MapLegend() {
         </span>
         <span>App reports (zoom in)</span>
       </span>
+    </div>
+  );
+}
+
+// ── View-mode toggle ──────────────────────────────────────────────────────────
+
+function ViewModeToggle({ mode, onChange }: {
+  mode:     'stats' | 'reports';
+  onChange: (m: 'stats' | 'reports') => void;
+}) {
+  const btnCls = (active: boolean) =>
+    `px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+      active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+    }`;
+  return (
+    <div className="inline-flex items-center bg-gray-100 rounded-full p-1 shrink-0" role="tablist" aria-label="Dashboard view mode">
+      <button role="tab" aria-selected={mode === 'reports'} className={btnCls(mode === 'reports')} onClick={() => onChange('reports')}>
+        View Only Reports
+      </button>
+      <button role="tab" aria-selected={mode === 'stats'} className={btnCls(mode === 'stats')} onClick={() => onChange('stats')}>
+        View All Statistics
+      </button>
     </div>
   );
 }
@@ -858,6 +899,12 @@ const DashboardPage = () => {
   const [fullscreen,   setFullscreen]   = useState(false);
   const [locating,     setLocating]     = useState(false);
   const [dashCopied,   setDashCopied]   = useState(false);
+  const [viewMode,     setViewMode]     = useState<'stats' | 'reports'>('stats');
+
+  const handleViewModeChange = (m: 'stats' | 'reports') => {
+    setViewMode(m);
+    trackEvent('dashboard_view_mode', { mode: m });
+  };
 
   // ── Swipe-to-dismiss state ────────────────────────────────────────────────
   const [dragY,      setDragY]      = useState(0);
@@ -1028,6 +1075,7 @@ const DashboardPage = () => {
             testimonialMarkers={testimonialMarkers}
             appReports={appReportPins}
             onReportSelect={handleReportSelect}
+            mode={viewMode}
           />
         </MapErrorBoundary>
       </div>
@@ -1055,15 +1103,18 @@ const DashboardPage = () => {
       {/* ── FULLSCREEN OVERLAY ─────────────────────────────────────────────── */}
       {fullscreen && (
         <div className="fixed inset-0 z-[9000] bg-white flex flex-col">
-          {/* Compact header: search + exit */}
+          {/* Compact header: mode toggle + search + exit */}
           <div className="px-3 py-2 bg-white border-b border-gray-100 flex items-center gap-2 shrink-0">
-            <div className="flex-1 min-w-0">
-              <WardSearch wardDataMap={wardDataMap} onSelect={handleSearchSelect} />
-            </div>
+            <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
+            {viewMode === 'stats' && (
+              <div className="flex-1 min-w-0">
+                <WardSearch wardDataMap={wardDataMap} onSelect={handleSearchSelect} />
+              </div>
+            )}
             <button
               onClick={() => setFullscreen(false)}
               title="Exit fullscreen"
-              className="shrink-0 p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="shrink-0 ml-auto p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
               aria-label="Exit fullscreen"
             >
               <Minimize2 className="h-4 w-4 text-gray-700" />
@@ -1075,7 +1126,7 @@ const DashboardPage = () => {
 
           {/* Legend strip */}
           <div className="px-4 py-2 border-t border-gray-100 bg-white shrink-0">
-            <MapLegend />
+            <MapLegend mode={viewMode} />
           </div>
         </div>
       )}
@@ -1090,7 +1141,11 @@ const DashboardPage = () => {
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight" style={{ fontFamily: "'Archivo', sans-serif" }}>
                 Bengaluru · Garbage Crisis Map
               </h1>
-              <p className="text-xs text-gray-500 mt-0.5">May 2026 · Select any ward or area to view more details</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {viewMode === 'reports'
+                  ? 'Live reports from the GEODHA app, plotted on the ward map'
+                  : 'May 2026 · Select any ward or area to view more details'}
+              </p>
             </div>
             <div className="flex items-center gap-1 shrink-0 mt-0.5">
               {/* Share dashboard */}
@@ -1115,12 +1170,18 @@ const DashboardPage = () => {
               </button>
             </div>
           </div>
-          <WardSearch wardDataMap={wardDataMap} onSelect={handleSearchSelect} />
+
+          {/* View mode toggle */}
+          <div className="mt-3">
+            <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
+          </div>
+
+          {viewMode === 'stats' && <WardSearch wardDataMap={wardDataMap} onSelect={handleSearchSelect} />}
         </div>
 
         {/* Legend — above map */}
         <div className="px-4 sm:px-6 py-2 border-y border-gray-100 bg-white">
-          <MapLegend />
+          <MapLegend mode={viewMode} />
         </div>
 
         {/* Map */}
@@ -1130,12 +1191,16 @@ const DashboardPage = () => {
         <div className="px-4 sm:px-6 border-t border-gray-50">
           {!sheetOpen && (
             <p className="py-2.5 text-center text-xs text-gray-400">
-              Tap any ward to explore issues and recommended actions
+              {viewMode === 'reports'
+                ? 'Tap a report pin to view its details'
+                : 'Tap any ward to explore issues and recommended actions'}
             </p>
           )}
-          <p className="py-2 text-center text-[10px] text-gray-300 border-t border-gray-50 leading-relaxed">
-            Severity ratings are relative — assessed by percentile intensity across Bengaluru's wards and aggregated from multiple citizen report sources.
-          </p>
+          {viewMode === 'stats' && (
+            <p className="py-2 text-center text-[10px] text-gray-300 border-t border-gray-50 leading-relaxed">
+              Severity ratings are relative — assessed by percentile intensity across Bengaluru's wards and aggregated from multiple citizen report sources.
+            </p>
+          )}
         </div>
 
       </div>{/* end normal layout */}

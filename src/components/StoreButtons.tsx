@@ -44,10 +44,10 @@ const StoreButtons = ({ placement, size = 'md', className = '' }: StoreButtonsPr
         className={tileCls}
         style={{ boxShadow: size === 'sm' ? '3px 3px 0 rgba(22,22,20,0.35)' : '4px 4px 0 rgba(22,22,20,0.35)' }}
         onClick={() => open(IOS_APP_URL, 'ios', placement)}
-        aria-label={t.common.iosBeta}
+        aria-label={t.common.iosApp}
       >
         <Apple className={size === 'sm' ? 'h-4 w-4' : 'h-5 w-5'} />
-        {t.common.iosBeta}
+        {t.common.iosApp}
       </button>
     </div>
   );

@@ -106,10 +106,10 @@ After EACH step: Pratul runs `npm run build` + spot-checks `npm run dev`.
 ## 3. App Store & Play Store links + UI (Sonnet)
 
 > STATUS 2026-07-07: core DONE (Fable session). `src/config/appLinks.ts`
-> (PLAY_STORE_URL + IOS_APP_URL — currently TestFlight beta:
-> https://testflight.apple.com/join/aU7jw7nW, flip IOS_IS_TESTFLIGHT when the
-> public App Store listing ships). New `StoreButtons` component (with
-> store_click GA events) used in Hero; Footer has both store links.
+> (PLAY_STORE_URL + IOS_APP_URL). App shipped on the public App Store
+> 2026-07-24: https://apps.apple.com/in/app/geodha/id6779552306. New
+> `StoreButtons` component (with store_click GA events) used in Hero;
+> Footer has both store links.
 > REMAINING: official store badge assets (do during redesign, §4); add
 > StoreButtons to GetStarted when that page's content is written; consider
 > OS-detecting smart link for shares.
@@ -217,7 +217,7 @@ Sections top→bottom:
    existing dark-section phone shell, restyle to kit: ink borders, white
    screens showing live-map / new-report / resolved-timeline vignettes).
    APP IS LIVE: replace mockup's "COMING SOON" chip with yellow chip "NOW
-   AVAILABLE"; StoreButtons (Play + TestFlight) styled as black store tiles.
+   AVAILABLE"; StoreButtons (Play + App Store) styled as black store tiles.
    This REPLACES the current slate-900 bottom section.
 6. **Split section**: LEFT (white) "FOR CITIZENS / Get started": list rows
    (.card-poster-lite rows w/ icon chip + arrow): Citizen guides → /guide,
