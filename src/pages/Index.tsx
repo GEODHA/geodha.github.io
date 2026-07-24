@@ -78,7 +78,7 @@ function HeroGlobe() {
 function ReportThread({ t }: { t: Dict['landing'] }) {
   const cardShadow = { boxShadow: 'var(--shadow-offset-3)' };
   return (
-    <div className="mt-8 max-w-sm mx-auto flex flex-col gap-3">
+    <div className="max-w-sm mx-auto flex flex-col gap-3">
       <div
         className="self-start bg-tint-blue border-[3px] border-ink rounded-2xl px-4 py-3 max-w-[88%]"
         style={cardShadow}
@@ -195,8 +195,8 @@ const Index = () => {
       </section>
 
       {/* ── SOLUTIONS 01 · REPORTING APP ── */}
-      <section className="bg-paper py-10 sm:py-12">
-        <div className="container px-4 sm:px-6 lg:px-8">
+      <section className="bg-paper py-7 sm:py-9">
+        <div className="container px-4 sm:px-5 lg:px-6">
           <SectionHead kicker={l.solutions1Kicker} title={l.solutions1Title} />
 
           {/* Screenshot strip — phone cards with captions below */}
@@ -224,7 +224,12 @@ const Index = () => {
           <div className="mt-6 flex justify-center">
             <StoreButtons placement="landing_solutions" />
           </div>
+        </div>
+      </section>
 
+      {/* ── REPORT LIFECYCLE — light gray band for contrast in this long section ── */}
+      <section className="bg-background border-t-[3px] border-ink py-6 sm:py-8">
+        <div className="container px-4 sm:px-5 lg:px-6">
           <ReportThread t={l} />
         </div>
       </section>
@@ -233,7 +238,7 @@ const Index = () => {
       <section className="bg-ink text-white border-y-[3px] border-ink">
         <div className="grid grid-cols-3 divide-x divide-white/20">
           {STATS.map((s) => (
-            <div key={s.label} className="px-3 sm:px-8 py-5 text-center">
+            <div key={s.label} className="px-3 sm:px-6 py-4 text-center">
               <div className="text-3xl sm:text-5xl font-black tracking-tight">{s.value}</div>
               <div className={`font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] mt-1.5 ${s.color}`}>
                 {s.label}
