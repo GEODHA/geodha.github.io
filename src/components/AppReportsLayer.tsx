@@ -22,6 +22,13 @@ export interface AppReportPin {
   title:    string;
   category: string;
   status:   AppReportStatus;
+  /**
+   * true when BBMP has marked the underlying Sahaaya complaint closed but the
+   * reporting user hasn't yet confirmed the issue is actually resolved.
+   * Overrides the status-based pin color to yellow (unless status is
+   * already 'resolved', which stays green).
+   */
+  sahaayaClosed?: boolean;
 }
 
 /** Pane that holds app-report pins + their clusters (crossfaded by zoom). */
@@ -36,8 +43,19 @@ export const APP_REPORT_STATUS_COLORS: Record<AppReportStatus, string> = {
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
-function pinIcon(status: AppReportStatus): L.DivIcon {
-  const color = APP_REPORT_STATUS_COLORS[status];
+/**
+ * Resolves the display color for a pin: green once the user has verified a
+ * report resolved, yellow once BBMP has closed the complaint but the user
+ * hasn't confirmed yet (regardless of app-side status), otherwise falls back
+ * to the plain status color (pending = red, verified = yellow, archived = gray).
+ */
+function pinColor(status: AppReportStatus, sahaayaClosed?: boolean): string {
+  if (status === 'resolved') return APP_REPORT_STATUS_COLORS.resolved;
+  if (sahaayaClosed)         return APP_REPORT_STATUS_COLORS.verified; // yellow
+  return APP_REPORT_STATUS_COLORS[status] ?? APP_REPORT_STATUS_COLORS.pending;
+}
+
+function pinIcon(color: string): L.DivIcon {
   const size  = 22;
   return L.divIcon({
     className: '',
@@ -51,15 +69,15 @@ function clusterIcon(cluster: L.MarkerCluster): L.DivIcon {
   const count    = cluster.getChildCount();
   const children = cluster.getAllChildMarkers();
 
-  // Priority: pending (red) > verified (yellow) > resolved (green) > gray
+  // Priority: red (open) > yellow (verified / closed pending confirmation) > green (resolved) > gray
   let color = APP_REPORT_STATUS_COLORS.archived;
-  const statuses = new Set(
+  const colors = new Set(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    children.map((m: any) => m.options.reportStatus as AppReportStatus),
+    children.map((m: any) => m.options.effectiveColor as string),
   );
-  if      (statuses.has('pending'))  color = APP_REPORT_STATUS_COLORS.pending;
-  else if (statuses.has('verified')) color = APP_REPORT_STATUS_COLORS.verified;
-  else if (statuses.has('resolved')) color = APP_REPORT_STATUS_COLORS.resolved;
+  if      (colors.has(APP_REPORT_STATUS_COLORS.pending))  color = APP_REPORT_STATUS_COLORS.pending;
+  else if (colors.has(APP_REPORT_STATUS_COLORS.verified)) color = APP_REPORT_STATUS_COLORS.verified;
+  else if (colors.has(APP_REPORT_STATUS_COLORS.resolved)) color = APP_REPORT_STATUS_COLORS.resolved;
 
   return L.divIcon({
     className: '',
@@ -92,10 +110,12 @@ const AppReportsLayer = ({ reports, onReportSelect }: Props) => {
     });
 
     for (const r of reports) {
+      const color = pinColor(r.status, r.sahaayaClosed);
       const marker = L.marker(r.position, {
-        icon:         pinIcon(r.status),
-        pane:         APP_REPORTS_PANE,
-        reportStatus: r.status, // consumed by clusterIcon for color priority
+        icon:          pinIcon(color),
+        pane:          APP_REPORTS_PANE,
+        reportStatus:  r.status,
+        effectiveColor: color, // consumed by clusterIcon for color priority
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
       marker.on('click', () => onReportSelect?.(r.id));
