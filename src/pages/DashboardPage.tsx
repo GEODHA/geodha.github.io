@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import {
   X, Camera, AlertTriangle, ArrowRight, Search, Loader2, AlertCircle,
   Maximize2, Minimize2, LocateFixed, Share2, Check, ExternalLink,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Info,
 } from 'lucide-react';
 
 import WardMap from '@/components/WardMap';
@@ -651,6 +651,71 @@ function WardSheet({ data, zone, scales, actions, allTestimonials, onClose }: Wa
   );
 }
 
+// ── BBMP / Sahaaya complaint status card ──────────────────────────────────────
+// Red by default (open/in-progress), yellow once BBMP marks it closed (pending
+// user confirmation), green once the user has verified it resolved.
+
+function BbmpStatusCard({ report }: { report: Report }) {
+  const sahaaya = report.sahaaya;
+  const userVerified   = report.status === 'resolved';
+  const officiallyClosed = sahaaya?.status === 'closed';
+
+  const tone = userVerified
+    ? { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-900', label: 'text-green-700', chipBg: 'bg-green-100' }
+    : officiallyClosed
+    ? { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-900', label: 'text-amber-700', chipBg: 'bg-amber-100' }
+    : { bg: 'bg-red-50',   border: 'border-red-200',   text: 'text-red-900',   label: 'text-red-700',   chipBg: 'bg-red-100' };
+
+  const reportedOn  = report.createdAt?.toDate ? report.createdAt.toDate() : null;
+  const remarkDate  = sahaaya?.lastPolledAt?.toDate ? sahaaya.lastPolledAt.toDate() : null;
+  const closedDate  = sahaaya?.closedAt?.toDate ? sahaaya.closedAt.toDate() : null;
+  const updateRef   = closedDate ?? remarkDate;
+  const daysToUpdate = reportedOn && updateRef ? differenceInCalendarDays(updateRef, reportedOn) : null;
+
+  return (
+    <section className={`mx-5 mt-4 rounded-xl border p-4 space-y-2 ${tone.bg} ${tone.border}`}>
+      {sahaaya?.grievanceId && (
+        <p className={`text-xs font-bold ${tone.label}`}>
+          BBMP Complaint ID: <span className="font-mono">{sahaaya.grievanceId}</span>
+        </p>
+      )}
+
+      {reportedOn && (
+        <p className={`text-xs ${tone.text}`}>
+          Reported on: {format(reportedOn, 'd MMM yyyy')}
+        </p>
+      )}
+
+      {sahaaya?.staffRemarks && (
+        <div className={`text-xs ${tone.text} leading-relaxed`}>
+          <p className="font-semibold">
+            BBMP remarks{remarkDate ? ` · ${format(remarkDate, 'd MMM yyyy')}` : ''}
+          </p>
+          <p className="italic mt-0.5">"{sahaaya.staffRemarks}"</p>
+        </div>
+      )}
+
+      {daysToUpdate !== null && daysToUpdate >= 0 && (
+        <p className={`text-[11px] font-medium ${tone.label}`}>
+          Received an update after {daysToUpdate} {daysToUpdate === 1 ? 'day' : 'days'}
+        </p>
+      )}
+
+      {officiallyClosed && !userVerified && (
+        <p className={`text-xs font-semibold ${tone.text} ${tone.chipBg} rounded-lg px-3 py-2 mt-1`}>
+          Report closed by officials. Pending user confirmation whether the issue was resolved or not.
+        </p>
+      )}
+
+      {userVerified && (
+        <p className={`text-xs font-semibold ${tone.text} ${tone.chipBg} rounded-lg px-3 py-2 mt-1`}>
+          Resolution confirmed — this report has been verified as closed.
+        </p>
+      )}
+    </section>
+  );
+}
+
 // ── App report detail sheet ───────────────────────────────────────────────────
 // Shown when a live GEODHA app-report pin is tapped (visible when zoomed in).
 
@@ -690,6 +755,9 @@ function ReportSheet({ report, onClose }: { report: Report; onClose: () => void 
         </div>
 
         <div className="overflow-y-auto" style={{ maxHeight: 'calc(82vh - 100px)', paddingBottom: 'env(safe-area-inset-bottom, 1.5rem)' }}>
+
+          {/* BBMP / Sahaaya complaint status */}
+          <BbmpStatusCard report={report} />
 
           {/* Photos */}
           {photos.length > 0 ? (
@@ -755,6 +823,76 @@ function ReportSheet({ report, onClose }: { report: Report; onClose: () => void 
   );
 }
 
+// ── Report color legend — clickable, with a popover explaining each color ────
+
+const REPORT_COLOR_MEANINGS: { color: string; label: string; body: string }[] = [
+  { color: '#ef4444', label: 'Reported',          body: 'Awaiting action from officials.' },
+  { color: '#eab308', label: 'Closed by officials', body: "Pending reporter's confirmation that the issue is actually resolved." },
+  { color: '#22c55e', label: 'Resolved',           body: 'Confirmed fixed by the reporter.' },
+];
+
+function ReportColorLegend({ suffix }: { suffix?: string }) {
+  const [open, setOpen] = useState(false);
+  const [popStyle, setPopStyle] = useState<React.CSSProperties>({});
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      const width = 260;
+      setPopStyle({
+        position: 'fixed',
+        top:      r.bottom + 6,
+        left:     Math.min(Math.max(8, r.left), window.innerWidth - width - 8),
+        width,
+        zIndex:   99999,
+      });
+    }
+    setOpen((o) => !o);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => {
+      if (btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={toggle}
+        aria-expanded={open}
+        aria-label="What do the report colors mean?"
+        className="flex items-center gap-1 ml-1 pl-2 border-l border-gray-200 hover:bg-gray-50 rounded px-1 -mx-1 transition-colors"
+      >
+        <span className="inline-flex gap-0.5">
+          {REPORT_COLOR_MEANINGS.map((c) => (
+            <span key={c.color} className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: c.color }} />
+          ))}
+        </span>
+        <span>App reports{suffix ? ` ${suffix}` : ''}</span>
+        <Info className="h-2.5 w-2.5 text-gray-400" />
+      </button>
+      {open && createPortal(
+        <div style={popStyle} className="bg-white border border-gray-200 rounded-lg shadow-xl p-3 space-y-2.5">
+          {REPORT_COLOR_MEANINGS.map((c) => (
+            <p key={c.color} className="flex items-start gap-2 text-xs text-gray-600 leading-relaxed">
+              <span className="mt-0.5 h-2.5 w-2.5 rounded-full shrink-0" style={{ background: c.color }} />
+              <span><span className="font-semibold text-gray-800">{c.label}</span> — {c.body}</span>
+            </p>
+          ))}
+        </div>,
+        document.body,
+      )}
+    </>
+  );
+}
+
 // ── Map legend ────────────────────────────────────────────────────────────────
 
 function MapLegend({ mode = 'stats' }: { mode?: 'stats' | 'reports' }) {
@@ -765,14 +903,7 @@ function MapLegend({ mode = 'stats' }: { mode?: 'stats' | 'reports' }) {
           <span className="inline-block h-2.5 w-4 rounded-sm border border-gray-400" style={{ background: 'transparent' }} />
           Ward boundary
         </span>
-        <span className="flex items-center gap-1 ml-1 pl-2 border-l border-gray-200">
-          <span className="inline-flex gap-0.5">
-            <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#ef4444' }} />
-            <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#eab308' }} />
-            <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#22c55e' }} />
-          </span>
-          <span>App reports</span>
-        </span>
+        <ReportColorLegend />
       </div>
     );
   }
@@ -797,14 +928,7 @@ function MapLegend({ mode = 'stats' }: { mode?: 'stats' | 'reports' }) {
         <span className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-green-700 text-white text-[8px] font-bold">✓</span>
         <span>Success stories</span>
       </span>
-      <span className="flex items-center gap-1 ml-1 pl-2 border-l border-gray-200">
-        <span className="inline-flex gap-0.5">
-          <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#ef4444' }} />
-          <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#eab308' }} />
-          <span className="h-2.5 w-2.5 rounded-full border border-white shadow-sm" style={{ background: '#22c55e' }} />
-        </span>
-        <span>App reports (zoom in)</span>
-      </span>
+      <ReportColorLegend suffix="(zoom in)" />
     </div>
   );
 }
@@ -884,6 +1008,8 @@ const DashboardPage = () => {
         title:    r.title,
         category: r.category,
         status:   r.status as AppReportStatus,
+        // BBMP closed the complaint but the user hasn't confirmed it yet → yellow pin.
+        sahaayaClosed: r.sahaaya?.status === 'closed',
       }));
   }, [authReady, reportsLoading, appReports]);
 
@@ -899,7 +1025,7 @@ const DashboardPage = () => {
   const [fullscreen,   setFullscreen]   = useState(false);
   const [locating,     setLocating]     = useState(false);
   const [dashCopied,   setDashCopied]   = useState(false);
-  const [viewMode,     setViewMode]     = useState<'stats' | 'reports'>('stats');
+  const [viewMode,     setViewMode]     = useState<'stats' | 'reports'>('reports');
 
   const handleViewModeChange = (m: 'stats' | 'reports') => {
     setViewMode(m);
