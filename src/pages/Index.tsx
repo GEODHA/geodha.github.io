@@ -78,7 +78,7 @@ function HeroGlobe() {
 function ReportThread({ t }: { t: Dict['landing'] }) {
   const cardShadow = { boxShadow: 'var(--shadow-offset-3)' };
   return (
-    <div className="mt-8 max-w-sm mx-auto flex flex-col gap-3">
+    <div className="max-w-sm mx-auto flex flex-col gap-3">
       <div
         className="self-start bg-tint-blue border-[3px] border-ink rounded-2xl px-4 py-3 max-w-[88%]"
         style={cardShadow}
@@ -182,8 +182,8 @@ const Index = () => {
       <MarqueeBanner t={l} />
 
       {/* ── THE PROBLEM ── */}
-      <section className="bg-tint-yellow py-10 sm:py-12 border-b-[3px] border-ink">
-        <div className="container px-4 sm:px-6 lg:px-8">
+      <section className="bg-tint-yellow py-7 sm:py-9 border-b-[3px] border-ink">
+        <div className="container px-4 sm:px-5 lg:px-6">
           <SectionHead title={l.problemTitle} caption={l.problemCaption} />
           <div className="max-w-3xl mx-auto">
             <SimpleCarousel slides={PROBLEM_SLIDES} aspect="aspect-[16/10]" fit="cover" />
@@ -195,8 +195,8 @@ const Index = () => {
       </section>
 
       {/* ── SOLUTIONS 01 · REPORTING APP ── */}
-      <section className="bg-paper py-10 sm:py-12">
-        <div className="container px-4 sm:px-6 lg:px-8">
+      <section className="bg-paper py-7 sm:py-9">
+        <div className="container px-4 sm:px-5 lg:px-6">
           <SectionHead kicker={l.solutions1Kicker} title={l.solutions1Title} />
 
           {/* Screenshot strip — phone cards with captions below */}
@@ -224,7 +224,12 @@ const Index = () => {
           <div className="mt-6 flex justify-center">
             <StoreButtons placement="landing_solutions" />
           </div>
+        </div>
+      </section>
 
+      {/* ── REPORT LIFECYCLE — light gray band for contrast in this long section ── */}
+      <section className="bg-background border-t-[3px] border-ink py-6 sm:py-8">
+        <div className="container px-4 sm:px-5 lg:px-6">
           <ReportThread t={l} />
         </div>
       </section>
@@ -233,7 +238,7 @@ const Index = () => {
       <section className="bg-ink text-white border-y-[3px] border-ink">
         <div className="grid grid-cols-3 divide-x divide-white/20">
           {STATS.map((s) => (
-            <div key={s.label} className="px-3 sm:px-8 py-5 text-center">
+            <div key={s.label} className="px-3 sm:px-6 py-4 text-center">
               <div className="text-3xl sm:text-5xl font-black tracking-tight">{s.value}</div>
               <div className={`font-mono text-[10px] sm:text-xs font-bold uppercase tracking-[0.1em] mt-1.5 ${s.color}`}>
                 {s.label}
@@ -244,8 +249,8 @@ const Index = () => {
       </section>
 
       {/* ── SOLUTIONS 02 · LIVE CITY DASHBOARD ── */}
-      <section className="bg-tint-blue py-10 sm:py-12 border-b-[3px] border-ink">
-        <div className="container px-4 sm:px-6 lg:px-8">
+      <section className="bg-tint-blue py-7 sm:py-9 border-b-[3px] border-ink">
+        <div className="container px-4 sm:px-5 lg:px-6">
           <div className="grid lg:grid-cols-5 gap-8 items-center">
             <div className="lg:col-span-2">
               <p className="mono-label text-accent mb-1.5">{l.solutions2Kicker}</p>
@@ -264,8 +269,8 @@ const Index = () => {
       </section>
 
       {/* ── BLOG / LEARN / VOLUNTEER ── */}
-      <section className="py-10 sm:py-12 border-b-[3px] border-ink">
-        <div className="container px-4 sm:px-6 lg:px-8">
+      <section className="py-7 sm:py-9 border-b-[3px] border-ink">
+        <div className="container px-4 sm:px-5 lg:px-6">
           <div className="grid sm:grid-cols-3 gap-5">
             {[
               {
@@ -305,7 +310,7 @@ const Index = () => {
       </section>
 
       {/* ── CONTRIBUTE CTA ── */}
-      <section className="bg-primary text-white py-12 sm:py-14 text-center px-4">
+      <section className="bg-primary text-white py-9 sm:py-11 text-center px-4">
         <h2 className="text-3xl sm:text-5xl font-black tracking-[-0.03em]">{l.ctaTitle}</h2>
         <p className="mt-3 text-lg font-medium text-white/85 max-w-xl mx-auto">
           {l.ctaBody}
