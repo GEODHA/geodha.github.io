@@ -669,7 +669,10 @@ function BbmpStatusCard({ report }: { report: Report }) {
   const reportedOn  = report.createdAt?.toDate ? report.createdAt.toDate() : null;
   const remarkDate  = sahaaya?.lastPolledAt?.toDate ? sahaaya.lastPolledAt.toDate() : null;
   const closedDate  = sahaaya?.closedAt?.toDate ? sahaaya.closedAt.toDate() : null;
-  const updateRef   = closedDate ?? remarkDate;
+  // Only a "closed" status is an actual update — interim remarks (e.g. "1st
+  // Assignment Based on Ward Mapping") are re-polled unchanged and would
+  // otherwise keep pushing this date out on every poll.
+  const updateRef   = officiallyClosed ? closedDate : null;
   const daysToUpdate = reportedOn && updateRef ? differenceInCalendarDays(updateRef, reportedOn) : null;
 
   return (
