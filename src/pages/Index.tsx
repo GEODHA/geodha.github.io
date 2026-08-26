@@ -139,8 +139,8 @@ const Index = () => {
 
   // ── Honest early-stage stats — update as they grow ─────────────────────────
   const STATS = [
-    { value: '150+', label: l.statUsers,       color: 'text-secondary' },
-    { value: '100+', label: l.statReports,     color: 'text-primary' },
+    { value: '200+', label: l.statUsers,       color: 'text-secondary' },
+    { value: '175+', label: l.statReports,     color: 'text-primary' },
     { value: '~10',  label: l.statCaseStudies, color: 'text-accent' },
   ];
 
