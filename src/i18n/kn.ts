@@ -48,6 +48,8 @@ export const kn: Dict = {
     bannerAvailable: 'GEODHA ವರದಿ ಆ್ಯಪ್ ಈಗ ಲಭ್ಯವಿದೆ!',
     bannerGooglePlay: 'Google Play',
     bannerAppStore: 'App Store',
+    bannerDengue: 'ಸೊಳ್ಳೆಗಳ ಕಾಟದಿಂದ ಬೇಸತ್ತಿದ್ದೀರಾ? ಹೊಸ ವರದಿ ಮಾಡುವ ಸಾಧನವೊಂದಕ್ಕಾಗಿ "ಬೀಟಾ ಪರೀಕ್ಷಕ"ರಾಗಿ (beta tester) ಸೇರಿಕೊಳ್ಳಿ.',
+    bannerLink: 'ಸೇರಲು ಇಲ್ಲಿ ಕ್ಲಿಕ್ ಮಾಡಿ',
 
     missionKicker: 'ನಮ್ಮ ಧ್ಯೇಯ',
     missionPart1: 'ಶುಚಿ,',

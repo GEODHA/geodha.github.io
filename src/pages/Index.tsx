@@ -14,7 +14,7 @@ import type { CarouselSlide } from '@/components/SimpleCarousel';
 import DashboardPreview from '@/components/DashboardPreview';
 import StoreButtons from '@/components/StoreButtons';
 import { CONTACT_EMAIL, WHATSAPP_COMMUNITY_URL } from '@/config/community';
-import { PLAY_STORE_URL, IOS_APP_URL } from '@/config/appLinks';
+import { PLAY_STORE_URL, IOS_APP_URL, BETA_TESTER_URL} from '@/config/appLinks';
 import { useI18n } from '@/i18n';
 import type { Dict } from '@/i18n';
 
@@ -157,10 +157,13 @@ const Index = () => {
       {/* ── APP ANNOUNCEMENT BANNER ── */}
       <div className="bg-secondary border-b-[3px] border-ink py-2 px-4 text-center">
         <p className="text-xs sm:text-sm font-bold text-ink">
-          📱 {l.bannerAvailable}{' '}
+          🦟 {l.bannerDengue}{' '}
+          <a href={BETA_TESTER_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 font-extrabold">{l.bannerLink}</a>
+          {' '}·{' '}
+          {/* 📱 {l.bannerAvailable}{' '}
           <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 font-extrabold">{l.bannerGooglePlay}</a>
           {' '}·{' '}
-          <a href={IOS_APP_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 font-extrabold">{l.bannerAppStore}</a>
+          <a href={IOS_APP_URL} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 font-extrabold">{l.bannerAppStore}</a> */}
         </p>
       </div>
 
