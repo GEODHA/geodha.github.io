@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON, Marker, useMap } from 'react-leaflet';
+import { MapContainer, GeoJSON, Marker, useMap } from 'react-leaflet';
 import type { Layer, PathOptions } from 'leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -8,6 +8,7 @@ import wardBoundaries from '../../data/ward-boundaries.json';
 import { outerRing, ringCentroid, featureBounds } from '@/lib/geo';
 import { computeScale, BAND } from '@/lib/severity';
 import type { BandLevel } from '@/lib/severity';
+import BaseTileLayer from './BaseTileLayer';
 import AppReportsLayer, { APP_REPORTS_PANE } from './AppReportsLayer';
 import type { AppReportPin } from './AppReportsLayer';
 
@@ -60,6 +61,12 @@ interface Props {
    * are just always visible. Mirrors the pre-merge /map page.
    */
   mode?: 'stats' | 'reports';
+  /**
+   * Optional outline drawn on top of the choropleth — used by the
+   * Neighbourhood Scorecard to show a GBA (369-ward) boundary over the
+   * BBMP (198-ward) data. The map flies to it whenever `id` changes.
+   */
+  highlight?: { id: string; geometry: GeoJSON.Geometry } | null;
 }
 
 // ── Zoom crossfade (ward icons ⇄ app report pins) ────────────────────────────
@@ -207,9 +214,25 @@ function ZoomController({ wardNum }: { wardNum: number }) {
   return null;
 }
 
+// ── Highlight overlay (GBA ward outline) ─────────────────────────────────────
+
+function FitToGeometry({ id, geometry }: { id: string; geometry: GeoJSON.Geometry }) {
+  const map = useMap();
+  useEffect(() => {
+    const bounds = featureBounds(geometry);
+    if (bounds) map.flyToBounds(bounds, { padding: [40, 40], duration: 0.6 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+  return null;
+}
+
+const HIGHLIGHT_STYLE: PathOptions = {
+  color: '#1a1a14', weight: 3, dashArray: '6 5', fillColor: '#2f7fe0', fillOpacity: 0.12,
+};
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimonialMarkers = [], appReports = [], onReportSelect, mode = 'stats' }: Props) => {
+const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimonialMarkers = [], appReports = [], onReportSelect, mode = 'stats', highlight = null }: Props) => {
   const reportsOnly = mode === 'reports';
   const geoJsonRef = useRef<L.GeoJSON | null>(null);
 
@@ -338,12 +361,7 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
       style={{ height: '100%', width: '100%', background: '#fff' }}
       zoomControl={true}
     >
-      <TileLayer
-        attribution='© <a href="https://carto.com/attributions">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-        subdomains={['a','b','c','d']}
-        opacity={0.55}
-      />
+      <BaseTileLayer />
 
       {/* Panes + zoom crossfade driver — must precede pane-targeted markers */}
       <MapSetup onReady={() => setPanesReady(true)} onCrossfade={setFadeT} crossfadeEnabled={!reportsOnly} />
@@ -358,6 +376,14 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
         onEachFeature={onEachFeature}
         ref={(r) => { if (r) geoJsonRef.current = r; }}
       />
+
+      {/* GBA ward outline (scorecard) — non-interactive so ward clicks pass through */}
+      {highlight && (
+        <>
+          <GeoJSON key={highlight.id} data={highlight.geometry} style={HIGHLIGHT_STYLE} interactive={false} />
+          <FitToGeometry id={highlight.id} geometry={highlight.geometry} />
+        </>
+      )}
 
       {/* Ward cluster markers: problem icons + testimonial badge (merged).
           Rendered in the ward-icons pane so they fade out on zoom-in.

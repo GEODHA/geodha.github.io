@@ -4,7 +4,8 @@
 
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { MapContainer, TileLayer, GeoJSON, Marker } from 'react-leaflet';
+import { MapContainer, GeoJSON, Marker } from 'react-leaflet';
+import BaseTileLayer from '@/components/BaseTileLayer';
 import type { PathOptions } from 'leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -101,14 +102,10 @@ const DashboardPreview = () => {
             doubleClickZoom={false}
             touchZoom={false}
             keyboard={false}
-            attributionControl={false}
+            attributionControl={true}
             style={{ height: '100%', width: '100%', background: '#fff' }}
           >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-              subdomains={['a', 'b', 'c', 'd']}
-              opacity={0.55}
-            />
+            <BaseTileLayer />
             <GeoJSON
               // @ts-expect-error json import typing
               data={wardBoundaries}

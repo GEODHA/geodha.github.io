@@ -41,7 +41,9 @@ export const kn: Dict = {
     contact: 'ಸಂಪರ್ಕಿಸಿ',
     androidApp: 'Android ಆ್ಯಪ್ — Google Play',
     iosApp: 'iOS ಆ್ಯಪ್ — App Store',
-    rights: '© 2026 GEODHA. ಎಲ್ಲ ಹಕ್ಕುಗಳು ಕಾಯ್ದಿರಿಸಲಾಗಿವೆ.',
+    community: 'ಬೆಂಗಳೂರಿನ ಸ್ವಯಂಸೇವಕರು ನಡೆಸುತ್ತಿರುವ ಮುಕ್ತ ಸಮುದಾಯ ಯೋಜನೆ. ಕೋಡ್ ಮತ್ತು ದತ್ತಾಂಶ ಎಲ್ಲರಿಗೂ ಮುಕ್ತ — ಮರುಬಳಸಿ, ಅದರ ಮೇಲೆ ನಿರ್ಮಿಸಿ, ಸುಧಾರಿಸಲು ನೆರವಾಗಿ.',
+    contribute: 'GitHub ನಲ್ಲಿ ಕೊಡುಗೆ ನೀಡಿ',
+    collaborate: 'ನಮ್ಮೊಂದಿಗೆ ಸಹಯೋಗ ಮಾಡಿ',
   },
   // Landing page (src/pages/Index.tsx) — full copy, section by section.
   landing: {

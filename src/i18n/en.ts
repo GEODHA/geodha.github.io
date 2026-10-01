@@ -39,7 +39,11 @@ export const en = {
     contact: 'Contact Us',
     androidApp: 'Android App — Google Play',
     iosApp: 'iOS App — App Store',
-    rights: '© 2026 GEODHA. All rights reserved.',
+    // No © line: GEODHA is a volunteer-run community project, not a registered
+    // entity, and the code + data are meant to be reused and built on.
+    community: 'A volunteer-run, open community project from Bengaluru. Code and data are open — reuse them, build on them, help improve them.',
+    contribute: 'Contribute on GitHub',
+    collaborate: 'Collaborate with us',
   },
   // Landing page (src/pages/Index.tsx) — full copy, section by section.
   landing: {

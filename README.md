@@ -27,7 +27,7 @@ GEODHA is a civic accountability platform piloting in Bengaluru, India. The webs
 | `/dashboard` | Ward-level heatmap dashboard (198 wards, 3 filter toggles) |
 | `/data` | Data & analysis — open burning × vulnerable communities |
 | `/report` | Report a Problem — mobile-optimised form |
-| `/blog` | Blog (Notion embed) |
+| `/blog` | Blog — Markdown posts in `content/blog`, edited via Decap CMS at `/cms` (see `docs/BLOG.md`) |
 | `/map` | Legacy map/reports view — preserved |
 | `/about` | About GEODHA |
 | `/privacy` | Privacy policy |
@@ -48,7 +48,7 @@ Copy `.env.example` to `.env` and fill in real values. **Never commit `.env`.**
 | `VITE_FIREBASE_APP_ID` | Firebase app ID | Yes |
 | `VITE_FIREBASE_MEASUREMENT_ID` | Firebase Analytics measurement ID | Yes |
 | `VITE_FIREBASE_VAPID_KEY` | Firebase VAPID key (push notifications) | Yes |
-| `VITE_BLOG_NOTION_URL` | Notion embed URL for `/blog` page | No (has default) |
+| `VITE_MAP_TILE_URL` / `VITE_MAP_TILE_ATTRIBUTION` | Override the basemap tile provider (defaults to OpenStreetMap, no key) | No |
 | `VITE_REPORT_FORM_URL` | External form URL for `/report` submissions | No |
 
 ---

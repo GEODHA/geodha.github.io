@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import DashboardPage from "./pages/DashboardPage";
 import ReportPage from "./pages/ReportPage";
 import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import About from "./pages/About";
 import GetStarted from "./pages/GetStarted";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -60,7 +61,9 @@ function RouteTracker() {
   useEffect(() => {
     document.title =
       ROUTE_TITLES[pathname] ??
-      (pathname.startsWith('/admin') ? 'Admin — GEODHA' : DEFAULT_TITLE);
+      (pathname.startsWith('/admin') ? 'Admin — GEODHA'
+        : pathname.startsWith('/blog/') ? 'Blog — GEODHA'
+        : DEFAULT_TITLE);
     if (typeof gtag === 'undefined') return;
     gtag('event', 'page_view', {
       page_path:  pathname,
@@ -119,6 +122,7 @@ const App = () => {
                     <Route path="/data"      element={<Navigate to="/dashboard" replace />} />
                     <Route path="/report"    element={<ReportPage />} />
                     <Route path="/blog"      element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
                     <Route path="/map"       element={<LegacyMapRedirect />} />
                     <Route path="/about"     element={<About />} />
                     <Route path="/privacy"   element={<PrivacyPolicy />} />

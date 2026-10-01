@@ -1,0 +1,53 @@
+# Decap CMS configuration for the GEODHA blog.
+# Full setup guide: docs/BLOG.md
+#
+# Login uses GitHub. Because the site is hosted on GitHub Pages (not Netlify),
+# GitHub OAuth needs a tiny token-exchange proxy. Deploy one (for example
+# https://github.com/sterlingwes/decap-proxy on Cloudflare Workers — free tier),
+# then uncomment `base_url` below and point it at YOUR deployed proxy.
+backend:
+  name: github
+  repo: GEODHA/geodha.github.io
+  branch: main
+  # base_url: https://<your-oauth-proxy>.workers.dev
+  # auth_endpoint: oauth   # only if your proxy uses a non-default path
+  commit_messages:
+    create: "Blog: create {{collection}} “{{slug}}”"
+    update: "Blog: update {{collection}} “{{slug}}”"
+    delete: "Blog: delete {{collection}} “{{slug}}”"
+    uploadMedia: "Blog: upload “{{path}}”"
+    deleteMedia: "Blog: delete “{{path}}”"
+
+# Every post goes through review: Decap opens a pull request per draft and
+# only merges it (→ deploy) when an editor clicks "Publish".
+publish_mode: editorial_workflow
+
+# `npx decap-server` + `npm run dev` lets you edit locally without OAuth.
+local_backend: true
+
+site_url: https://geodha.org
+display_url: https://geodha.org/blog
+logo_url: /favicon.svg
+
+media_folder: public/media/blog
+public_folder: /media/blog
+
+collections:
+  - name: blog
+    label: Blog posts
+    label_singular: Blog post
+    folder: content/blog
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    preview_path: "blog/{{filename}}"
+    sortable_fields: [date, title]
+    summary: "{{title}} — {{date}}"
+    fields:
+      - { label: Title, name: title, widget: string }
+      - { label: Publish date, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: Author, name: author, widget: string, default: "GEODHA volunteers" }
+      - { label: Summary, name: summary, widget: text, hint: "One or two sentences shown on the blog index." }
+      - { label: Cover image, name: cover, widget: image, required: false }
+      - { label: Tags, name: tags, widget: list, default: [], hint: "Comma-separated, e.g. waste, data, wards" }
+      - { label: Draft (hide from site), name: draft, widget: boolean, default: false }
+      - { label: Body, name: body, widget: markdown }

@@ -7,7 +7,6 @@ const PrivacyPolicy: React.FC = () => {
     month: "long",
     year: "numeric",
   });
-  const currentYear = now.getFullYear();
 
   return (
     <div className="min-h-screen bg-background">
@@ -140,7 +139,7 @@ const PrivacyPolicy: React.FC = () => {
             </p>
 
             <footer className="mt-12 text-center text-sm text-muted-foreground">
-              <p>© GEODHA {currentYear}. All rights reserved.</p>
+              <p>GEODHA — a volunteer-run community project.</p>
             </footer>
           </div>
         </div>

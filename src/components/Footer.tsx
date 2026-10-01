@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Mail, Linkedin, Instagram, MessageSquare } from 'lucide-react';
+import { Mail, Linkedin, Instagram, MessageSquare, Github } from 'lucide-react';
+import { GITHUB_REPO_URL } from '@/config/community';
 import reapBenefitLogo from '@/assets/reap-benefit-logo.png';
 import StoreButtons from '@/components/StoreButtons';
 import { useI18n } from '@/i18n';
@@ -102,7 +103,15 @@ const Footer = () => {
 
         {/* Bottom row */}
         <div className="mt-10 pt-6 border-t-2 border-ink/15 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          <p className="font-mono text-xs text-muted-foreground">{t.footer.rights}</p>
+          <div className="space-y-2 max-w-xl">
+            <p className="font-mono text-xs text-muted-foreground leading-relaxed">{t.footer.community}</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs font-bold">
+              <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-primary transition-colors">
+                <Github className="h-3.5 w-3.5" /> {t.footer.contribute}
+              </a>
+              <Link to="/about#collaborate" className="hover:text-primary transition-colors">{t.footer.collaborate} →</Link>
+            </div>
+          </div>
           <Link
             to="/report"
             className="inline-block px-5 py-2.5 bg-secondary text-secondary-foreground text-sm font-extrabold rounded-full border-[2.5px] border-ink transition-transform active:translate-x-[2px] active:translate-y-[2px]"
