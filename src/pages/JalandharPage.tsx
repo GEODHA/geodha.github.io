@@ -5,13 +5,14 @@
 // Default language is Hindi (see PATH_DEFAULT_LOCALES in src/i18n).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, SlidersHorizontal, Loader2, AlertCircle, X, ArrowRight } from 'lucide-react';
+import { ChevronDown, SlidersHorizontal, Loader2, AlertCircle, X } from 'lucide-react';
 
 import CityReportsMap from '@/components/CityReportsMap';
 import MapErrorBoundary from '@/components/MapErrorBoundary';
 import AutoScrollRow from '@/components/AutoScrollRow';
+import StoreButtons from '@/components/StoreButtons';
 import { ReportDialog } from '@/components/ReportCard';
 import { reportsService } from '@/services/reportsService';
 import type { Report, ReportSize } from '@/services/reportsService';
@@ -323,19 +324,16 @@ const JalandharPage = () => {
 
       {/* ── CTA ────────────────────────────────────────────────────────── */}
       <section className="container mt-12">
-        <Link
-          to="/report"
-          className="flex items-center justify-between gap-4 rounded-2xl border-[3px] border-ink bg-stripes-yellow p-5 sm:p-7"
+        <div
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 rounded-2xl border-[3px] border-ink bg-stripes-yellow p-5 sm:p-7"
           style={{ boxShadow: 'var(--shadow-offset-6)' }}
         >
           <div className="bg-paper border-2 border-ink rounded-xl px-4 py-3">
             <p className="text-lg sm:text-2xl font-extrabold" style={{ fontFamily: "'Archivo', sans-serif" }}>{t.jalandhar.ctaTitle}</p>
             <p className="text-sm text-foreground/75 mt-1">{t.jalandhar.ctaBody}</p>
           </div>
-          <span className="shrink-0 h-12 w-12 rounded-full bg-paper border-[3px] border-ink flex items-center justify-center">
-            <ArrowRight className="h-5 w-5" />
-          </span>
-        </Link>
+          <StoreButtons placement="jalandhar_cta" className="shrink-0" />
+        </div>
       </section>
 
       <ReportDialog report={selected} onClose={closeReport} onViewOnMap={viewOnMap} />

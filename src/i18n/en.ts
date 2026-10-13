@@ -107,7 +107,7 @@ export const en = {
   jalandhar: {
     kicker: 'Jalandhar · Punjab',
     title: 'Jalandhar Garbage Map',
-    subtitle: 'Live reports from the GEODHA app across Jalandhar and nearby villages in Punjab. Tap any spot for details.',
+    subtitle: 'Tap any spot for details.',
     loading: 'Loading reports…',
     loadError: 'Could not load reports right now. Please try again later.',
 
