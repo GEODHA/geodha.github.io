@@ -19,7 +19,12 @@ import { db, storage, ensureAuth } from '@/lib/firebase';
 import { transformToReport } from './dataTransformService';
 
 
-export type ReportCategory = 'garbage' | 'sewage' | 'burning' | 'construction' | 'pollution' | 'other';
+// Legacy web categories plus the mobile app's current enum
+// (littering | open_dump | construction_debris | plant_waste | open_burning | other).
+export type ReportCategory =
+  | 'garbage' | 'sewage' | 'burning' | 'construction' | 'pollution' | 'other'
+  | 'littering' | 'open_dump' | 'construction_debris' | 'plant_waste' | 'open_burning';
+export type ReportSize = 'small' | 'medium' | 'large';
 export type ReportStatus = 'pending' | 'verified' | 'resolved' | 'archived';
 
 // ── BBMP / Sahaaya complaint lifecycle ────────────────────────────────────────
@@ -45,6 +50,24 @@ export interface SahaayaInfo {
   closedAt?: Timestamp;
 }
 
+// Cleanup evidence written by the app's resolveReport function. A single
+// "after" photo; absent photoUrl + photoPending=true means the author marked
+// it cleaned and will add the photo later.
+export type ResolutionAttribution =
+  | { type: 'government'; channel: 'sahaaya' }
+  | { type: 'organisation'; organisationId: string; organisationName: string };
+
+export interface ReportResolution {
+  photoUrl?: string;
+  storagePath?: string;
+  resolvedBy: string;
+  resolvedAt?: Timestamp;
+  photoPending?: boolean;
+  photoAddedAt?: Timestamp;
+  attribution?: ResolutionAttribution;
+  attributions?: ResolutionAttribution[];
+}
+
 export interface Report {
   id?: string;
   title: string;
@@ -54,13 +77,26 @@ export interface Report {
   location: {
     latitude: number;
     longitude: number;
+    /** Legacy documents store a GeoPoint here instead of latitude/longitude. */
+    coordinates?: { latitude: number; longitude: number };
+    landmark?: string;
     address?: string;
     ward?: string;
     city?: string;
     state?: string;
     postalCode?: string;
   };
+  /** Legacy root-level [lat, lng]. */
+  position?: [number, number];
   photos: string[];
+  /** Best-effort 96px thumbnails, parallel to photos. */
+  thumbUrls?: string[];
+  issueSize?: ReportSize;
+  aiInsights?: {
+    original?: { approxSize?: string; itemsDetected?: string[] };
+    userEdited?: { approxSize?: string; itemsDetected?: string[] };
+  };
+  resolution?: ReportResolution;
   authorId: string;
   authorName?: string;
   isAnonymous: boolean;

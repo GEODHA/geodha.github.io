@@ -1,5 +1,5 @@
 // English strings — source of truth for the Dict type.
-// Keep keys in sync with kn.ts (TypeScript enforces it).
+// Keep keys in sync with kn.ts and hi.ts (TypeScript enforces it).
 
 export const en = {
   common: {
@@ -18,6 +18,7 @@ export const en = {
     blog: 'Blog',
     about: 'About',
     city: 'Bengaluru',
+    cityJalandhar: 'Jalandhar',
     otherCities: 'Other cities — sign up',
     language: 'Language',
   },
@@ -101,5 +102,72 @@ export const en = {
     ctaTitle: 'Join us in our mission',
     ctaBody: 'Reach out to collaborate, volunteer, or bring GEODHA to your city.',
     ctaWhatsapp: 'WhatsApp Community',
+  },
+  // Jalandhar city data page (src/pages/JalandharPage.tsx) + shared report card.
+  jalandhar: {
+    kicker: 'Jalandhar · Punjab',
+    title: 'Jalandhar Garbage Map',
+    subtitle: 'Live reports from the GEODHA app across Jalandhar and nearby villages in Punjab. Tap any spot for details.',
+    loading: 'Loading reports…',
+    loadError: 'Could not load reports right now. Please try again later.',
+
+    filters: 'Filters',
+    filterSize: 'Size',
+    filterStatus: 'Status',
+    all: 'All',
+    clearFilters: 'Clear filters',
+    showingOnMap: 'spots on the map',
+
+    statReported: 'Reported spots',
+    statReportedNote: 'Across Punjab',
+    statCleaned: 'Cleaned-up spots',
+    statCleanedNote: 'Confirmed cleaned',
+
+    largeTitle: 'Large garbage spots',
+    largeBody: 'The biggest dumps reported by citizens.',
+    largeEmpty: 'No large spots reported yet.',
+    cleanupTitle: 'Cleanups: before & after',
+    cleanupBody: 'Spots that were cleaned up, with photo proof.',
+    cleanupEmpty: 'No cleanups with photos yet.',
+    before: 'Before',
+    after: 'After',
+
+    ctaTitle: 'See garbage in Jalandhar?',
+    ctaBody: 'Report it in 30 seconds with the GEODHA app. Every report shows up on this map.',
+  },
+  report: {
+    sizeSmall: 'Small',
+    sizeMedium: 'Medium',
+    sizeLarge: 'Large',
+    statusPending: 'Pending',
+    statusVerified: 'Verified',
+    statusResolved: 'Cleaned up',
+    statusArchived: 'Archived',
+    statusClosedByOfficials: 'Closed by officials',
+    catLittering: 'Littering',
+    catOpenDump: 'Open dump',
+    catConstructionDebris: 'Construction debris',
+    catPlantWaste: 'Plant waste',
+    catOpenBurning: 'Open burning',
+    catOther: 'Other',
+    reportedOn: 'Reported',
+    cleanedOn: 'Cleaned up',
+    location: 'Location',
+    coordinates: 'Coordinates',
+    locationUnavailable: 'Location unavailable',
+    copy: 'Copy',
+    copied: 'Copied!',
+    share: 'Share',
+    viewOnMap: 'View on map',
+    openInMaps: 'Open in Google Maps',
+    close: 'Close',
+    before: 'Before',
+    after: 'After',
+    afterPhotoPending: 'Cleaned up — after photo pending',
+    creditedTo: 'Cleanup credited to',
+    government: 'Government',
+    endorsements: 'endorsements',
+    shareTitle: 'Garbage spot on GEODHA',
+    seenSimilar: 'Seen something similar? Report it with the GEODHA app.',
   },
 };
