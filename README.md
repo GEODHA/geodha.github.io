@@ -29,6 +29,7 @@ GEODHA is a civic accountability platform piloting in Bengaluru, India. The webs
 | `/report` | Report a Problem — mobile-optimised form |
 | `/blog` | Blog (Notion embed) |
 | `/map` | Legacy map/reports view — preserved |
+| `/jalandhar` | Jalandhar (Punjab) city data page — live report map, size/status filters, Punjab-wide counts, large-spot and before/after cleanup carousels. Defaults to Hindi. |
 | `/about` | About GEODHA |
 | `/privacy` | Privacy policy |
 

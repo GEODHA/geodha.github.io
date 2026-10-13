@@ -13,11 +13,12 @@ import GetStarted from "./pages/GetStarted";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Navigation from "./components/Navigation";
 import Footer from "./components/Footer";
-import { I18nProvider } from "./i18n";
+import { I18nProvider, useI18n } from "./i18n";
 import NotFound from "./pages/NotFound";
 import WasteGuide from "./pages/WasteGuide";
 import BWGGuidePage from "./pages/BWGGuidePage";
 import VolunteerPage from "./pages/VolunteerPage";
+import JalandharPage from "./pages/JalandharPage";
 
 // ── Admin (gitignored — lives in src/admin/, absent on fresh clones) ──────────
 // vite.config.ts contains a plugin that resolves these to a null-component stub
@@ -52,11 +53,16 @@ const ROUTE_TITLES: Record<string, string> = {
   '/guide':       'Waste Guide — GEODHA',
   '/guide2':      'BWG Disposal Guidelines — GEODHA',
   '/volunteer':   'Volunteer for Cleanups — GEODHA',
+  '/jalandhar':   'Jalandhar Garbage Map — GEODHA',
 };
 
 /** Sets the per-route title, then fires a GA4 page_view on every navigation. */
 function RouteTracker() {
   const { pathname } = useLocation();
+  const { applyPathDefault } = useI18n();
+  // Route-level default language (e.g. Hindi on /jalandhar) unless the
+  // visitor has picked one explicitly.
+  useEffect(() => { applyPathDefault(pathname); }, [pathname, applyPathDefault]);
   useEffect(() => {
     document.title =
       ROUTE_TITLES[pathname] ??
@@ -126,6 +132,7 @@ const App = () => {
                     <Route path="/guide"     element={<WasteGuide />} />
                     <Route path="/guide2"    element={<BWGGuidePage />} />
                     <Route path="/volunteer" element={<VolunteerPage />} />
+                    <Route path="/jalandhar" element={<JalandharPage />} />
                     <Route path="*"          element={<NotFound />} />
                   </Routes>
                   <Footer />

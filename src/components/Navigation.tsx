@@ -19,6 +19,14 @@ const Navigation = () => {
     { path: '/about',     label: t.nav.about },
   ];
 
+  // City data pages. Bengaluru's lives at /dashboard (ward heatmap).
+  const cities = [
+    { path: '/dashboard', prefix: '/dashboard', label: t.nav.city },
+    { path: '/jalandhar', prefix: '/jalandhar', label: t.nav.cityJalandhar },
+  ];
+  const currentCity =
+    cities.find((c) => currentPath.toLowerCase().startsWith(c.prefix) && c.path !== '/dashboard') ?? cities[0];
+
   const handleNavigation = (path: string) => {
     setIsMobileMenuOpen(false);
     navigate(path);
@@ -45,12 +53,25 @@ const Navigation = () => {
           <div className="relative group min-w-0">
             <button className="flex items-center gap-1 text-xs sm:text-sm font-bold text-foreground/70 hover:text-foreground px-1.5 sm:px-2 py-1 rounded transition-colors">
               <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{t.nav.city}</span>
+              <span className="truncate">{currentCity.label}</span>
               <ChevronDown className="h-3 w-3 shrink-0" />
             </button>
-            <div className="absolute top-full left-0 mt-2 w-52 rounded-xl border-2 border-ink bg-paper opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50" style={{ boxShadow: 'var(--shadow-offset-3)' }}>
+            <div className="absolute top-full left-0 mt-2 w-52 rounded-xl border-2 border-ink bg-paper opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-150 z-50" style={{ boxShadow: 'var(--shadow-offset-3)' }}>
               <div className="p-2">
-                <div className="px-3 py-2 text-sm font-bold rounded-lg bg-tint-green">{t.nav.city}</div>
+                {cities.map((c) => (
+                  <button
+                    key={c.path}
+                    onClick={(e) => { e.currentTarget.blur(); handleNavigation(c.path); }}
+                    className={cn(
+                      'w-full text-left px-3 py-2 text-sm rounded-lg transition-colors',
+                      c === currentCity
+                        ? 'font-bold bg-tint-green'
+                        : 'font-medium text-muted-foreground hover:text-foreground hover:bg-muted'
+                    )}
+                  >
+                    {c.label}
+                  </button>
+                ))}
                 <a
                   href="https://forms.gle/K3GGQdBe5k2uH44f7"
                   target="_blank"
@@ -65,7 +86,7 @@ const Navigation = () => {
 
           <div className="w-px h-4 bg-border" />
 
-          {/* Language selector — functional (English / ಕನ್ನಡ) */}
+          {/* Language selector — functional (English / ಕನ್ನಡ / हिन्दी) */}
           <div className="relative group shrink-0">
             <button className="flex items-center gap-1.5 text-sm font-bold text-foreground/70 hover:text-foreground px-1.5 sm:px-2 py-1 rounded transition-colors" aria-label={t.nav.language}>
               <Languages className="h-4 w-4" />
