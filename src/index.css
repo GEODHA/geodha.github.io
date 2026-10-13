@@ -230,3 +230,9 @@
 .animate-spin-slow {
   animation: spin-slow 90s linear infinite;
 }
+
+/* Muted basemap for choropleth maps — desaturates the colorful OSM tiles so
+   ward colors stay readable (applied via TileLayer className). */
+.leaflet-container .tiles-muted {
+  filter: grayscale(1) brightness(1.08) contrast(0.92);
+}

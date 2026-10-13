@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 
 import wardBoundaries from '../../data/ward-boundaries.json';
 import { outerRing, ringCentroid, featureBounds } from '@/lib/geo';
+import { OSM_TILE_URL, OSM_ATTRIBUTION, OSM_MAX_ZOOM } from '@/config/mapConfig';
 import { computeScale, BAND } from '@/lib/severity';
 import type { BandLevel } from '@/lib/severity';
 import AppReportsLayer, { APP_REPORTS_PANE } from './AppReportsLayer';
@@ -339,9 +340,10 @@ const WardMap = ({ wardDataMap, selectedWard, onWardSelect, zoomToWard, testimon
       zoomControl={true}
     >
       <TileLayer
-        attribution='© <a href="https://carto.com/attributions">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-        subdomains={['a','b','c','d']}
+        attribution={OSM_ATTRIBUTION}
+        url={OSM_TILE_URL}
+        maxZoom={OSM_MAX_ZOOM}
+        className="tiles-muted"
         opacity={0.55}
       />
 

@@ -11,6 +11,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet.markercluster';
 import type { Report } from '@/services/reportsService';
 import { reportLatLng, reportSize, reportColor, STATUS_COLORS } from '@/lib/reportFields';
+import { OSM_TILE_URL, OSM_ATTRIBUTION, OSM_MAX_ZOOM } from '@/config/mapConfig';
 
 const PIN_SIZES = { small: 16, medium: 20, large: 26 } as const;
 
@@ -106,12 +107,7 @@ const CityReportsMap = ({ center, zoom = 12, reports, focus = null, highlightId,
     scrollWheelZoom={false}
     style={{ height: '100%', width: '100%', background: '#f4f4f2' }}
   >
-    <TileLayer
-      attribution='© <a href="https://carto.com/attributions">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-      subdomains={['a', 'b', 'c', 'd']}
-      maxZoom={19}
-    />
+    <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILE_URL} maxZoom={OSM_MAX_ZOOM} />
     <ReportsLayer reports={reports} highlightId={highlightId} onReportSelect={onReportSelect} />
     <FocusController focus={focus} />
   </MapContainer>

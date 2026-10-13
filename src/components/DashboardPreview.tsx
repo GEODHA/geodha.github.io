@@ -12,6 +12,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 
 import wardBoundaries from '../../data/ward-boundaries.json';
 import { outerRing, ringCentroid } from '@/lib/geo';
+import { OSM_TILE_URL, OSM_ATTRIBUTION, OSM_MAX_ZOOM } from '@/config/mapConfig';
 import { useWardStats } from '@/hooks/useWardStats';
 import { computeScale, BAND } from '@/lib/severity';
 import type { BandLevel } from '@/lib/severity';
@@ -101,12 +102,13 @@ const DashboardPreview = () => {
             doubleClickZoom={false}
             touchZoom={false}
             keyboard={false}
-            attributionControl={false}
             style={{ height: '100%', width: '100%', background: '#fff' }}
           >
             <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
-              subdomains={['a', 'b', 'c', 'd']}
+              attribution={OSM_ATTRIBUTION}
+              url={OSM_TILE_URL}
+              maxZoom={OSM_MAX_ZOOM}
+              className="tiles-muted"
               opacity={0.55}
             />
             <GeoJSON

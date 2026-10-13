@@ -59,3 +59,13 @@ export const getOptimalZoom = (
     }
   }
 };
+
+// ── Basemap tiles ─────────────────────────────────────────────────────────────
+// Standard OpenStreetMap tiles: no API key. The OSM tile usage policy
+// (https://operations.osmfoundation.org/policies/tiles/) requires visible
+// attribution and is meant for moderate traffic — if usage grows, move to a
+// keyed provider or self-hosted tiles by changing these two constants.
+export const OSM_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+export const OSM_ATTRIBUTION =
+  '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+export const OSM_MAX_ZOOM = 19;
