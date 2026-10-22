@@ -28,6 +28,27 @@ const WARD_STATS_COL      = 'geodha_ward_stats';
 const WARD_SNAPSHOTS_COL  = 'geodha_ward_stats_snapshots';
 const ACTIONS_COL         = 'geodha_recommended_actions';
 const TESTIMONIALS_COL    = 'geodha_testimonials';
+const PUBLIC_STATS_COL    = 'geodha_public_stats';
+
+export interface PublicStats {
+  registeredUsers:     number;
+  sahaayaReportsFiled: number;
+}
+
+/**
+ * Reads the weekly-refreshed public counters (geodha_public_stats/summary).
+ * Returns null if the doc is missing, malformed, or the read fails.
+ */
+export async function fetchPublicStats(): Promise<PublicStats | null> {
+  try {
+    const snap = await getDoc(doc(db, PUBLIC_STATS_COL, 'summary'));
+    const { registeredUsers, sahaayaReportsFiled } = snap.data() ?? {};
+    if (typeof registeredUsers !== 'number' || typeof sahaayaReportsFiled !== 'number') return null;
+    return { registeredUsers, sahaayaReportsFiled };
+  } catch {
+    return null;
+  }
+}
 
 // ── Shared types ──────────────────────────────────────────────────────────────
 

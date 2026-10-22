@@ -4,6 +4,7 @@
 // Volunteer → Contribute.
 // Fully wired to i18n — all copy comes from t.landing.* (see src/i18n/en.ts, kn.ts).
 
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Mail, MessageCircle, Newspaper, Recycle, HandHeart, ArrowRight, Send, CheckCircle2,
@@ -17,6 +18,11 @@ import { CONTACT_EMAIL, WHATSAPP_COMMUNITY_URL } from '@/config/community';
 import { PLAY_STORE_URL, IOS_APP_URL, BETA_TESTER_URL} from '@/config/appLinks';
 import { useI18n } from '@/i18n';
 import type { Dict } from '@/i18n';
+import { fetchPublicStats } from '@/services/geodhaService';
+import type { PublicStats } from '@/services/geodhaService';
+
+// Added to the Firestore reports count before display.
+const REPORTS_OFFSET = 50;
 
 // ── App screenshots (swap/reorder freely; captions stay minimal) ─────────────
 import shot1 from '@/assets/screenshot1.jpg';
@@ -137,10 +143,19 @@ const Index = () => {
   const { t } = useI18n();
   const l = t.landing;
 
-  // ── Honest early-stage stats — update as they grow ─────────────────────────
+  // Live counters (refreshed weekly); tiles are hidden until loaded / on failure.
+  const [live, setLive] = useState<PublicStats | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicStats().then((s) => { if (!cancelled) setLive(s); });
+    return () => { cancelled = true; };
+  }, []);
+
   const STATS = [
-    { value: '200+', label: l.statUsers,       color: 'text-secondary' },
-    { value: '175+', label: l.statReports,     color: 'text-primary' },
+    ...(live ? [
+      { value: `${live.registeredUsers.toLocaleString()}+`, label: l.statUsers, color: 'text-secondary' },
+      { value: `${(live.sahaayaReportsFiled + REPORTS_OFFSET).toLocaleString()}+`, label: l.statReports, color: 'text-primary' },
+    ] : []),
     { value: '~10',  label: l.statCaseStudies, color: 'text-accent' },
   ];
 
@@ -239,7 +254,10 @@ const Index = () => {
 
       {/* ── APP STATS — right below the app ── */}
       <section className="bg-ink text-white border-y-[3px] border-ink">
-        <div className="grid grid-cols-3 divide-x divide-white/20">
+        <div
+          className="grid divide-x divide-white/20"
+          style={{ gridTemplateColumns: `repeat(${STATS.length}, minmax(0, 1fr))` }}
+        >
           {STATS.map((s) => (
             <div key={s.label} className="px-3 sm:px-6 py-4 text-center">
               <div className="text-3xl sm:text-5xl font-black tracking-tight">{s.value}</div>

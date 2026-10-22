@@ -85,7 +85,7 @@ export const en = {
     threadCaption: 'One-tap reporting straight to official channels. Every report and its status stays visible to the community, improving traceability and accountability.',
 
     statUsers: 'App users',
-    statReports: 'Reports filed',
+    statReports: 'Reports filed to officials',
     statCaseStudies: 'Documented case studies',
 
     solutions2Kicker: 'Our Solutions · 02',
