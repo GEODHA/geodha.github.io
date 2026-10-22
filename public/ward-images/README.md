@@ -37,7 +37,7 @@ Images are organised by **ward slug** (kebab-case ward name):
 
 ## Ward Slug Reference
 
-Ward slugs match the keys in `data/ward-heatmap.json` and `data/ward-boundaries.json`. Example slugs:
+Ward slugs match the keys in `data/ward-heatmap.json`. Example slugs:
 
 | Ward Name                | Slug                      |
 |--------------------------|---------------------------|

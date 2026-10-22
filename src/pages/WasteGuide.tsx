@@ -152,7 +152,7 @@ const BIN_STYLES: Record<BinColor, { iconBg: string; labelColor: string; nameCol
 const DROP_POINTS = [
   {
     name: '🌿 Garden & Leaf Waste',
-    desc: 'Nearest community drop point. Some wards have street leaf composters. Check with your ward office or BBMP marshal for your nearest point.',
+    desc: 'Nearest community drop point. Some wards have street leaf composters. Check with your ward office or GBA marshal for your nearest point.',
     tags: [{ label: 'Drop point', style: 'green' as const }],
     severity: 'soft' as const,
   },
@@ -457,7 +457,7 @@ export default function WasteGuide() {
               <p style={{ fontSize: 13.5, color: C.textSec, marginBottom: 14, lineHeight: 1.6 }}>
                 Premises that meet <strong>any one</strong> of the thresholds below are classified as
                 <strong> Bulk Waste Generators (BWG)</strong> — with mandatory on-site processing,
-                BBMP registration, and monthly reporting requirements that go beyond standard doorstep collection.
+                GBA registration, and monthly reporting requirements that go beyond standard doorstep collection.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-4">
                 {[

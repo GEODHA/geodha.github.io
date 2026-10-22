@@ -204,8 +204,8 @@ Sections top→bottom:
    Blue circle accent peeking behind panel edge.
 3. **Stats band**: ink bg, 3 cols, Archivo 900 white numbers + colored
    .mono-label captions (yellow/green/blue). REAL DATA: reports count (from
-   Firestore app reports or scraper monthly total), "198 WARDS COVERED"
-   (verify against ward-boundaries.json feature count), resolved % (compute
+   Firestore app reports or scraper monthly total), "369 WARDS COVERED"
+   (verify against gba-ward-boundaries.json feature count), resolved % (compute
    from report statuses; omit the stat if not defensible).
 4. **"What we tackle, together"**: h2 + right-aligned mono caption ("Tap a
    category, add a photo, done."). 4 tint cards (tint-yellow/green/blue/white),

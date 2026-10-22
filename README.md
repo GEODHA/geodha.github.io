@@ -1,6 +1,6 @@
 # GEODHA
 
-**Civic accountability for Bengaluru's 198 wards.** Citizen-generated reports → documented evidence → institutions act.
+**Civic accountability for Bengaluru's 369 GBA wards.** Citizen-generated reports → documented evidence → institutions act.
 
 ## About GEODHA
 
@@ -24,7 +24,7 @@ GEODHA is a civic accountability platform piloting in Bengaluru, India. The webs
 | Route | Description |
 |---|---|
 | `/` | Homepage — hero, problem empathy section, services |
-| `/dashboard` | Ward-level heatmap dashboard (198 wards, 3 filter toggles) |
+| `/dashboard` | Ward map — 369 GBA wards tinted by city corporation with live app reports; citizen testimonials carousel below |
 | `/data` | Data & analysis — open burning × vulnerable communities |
 | `/report` | Report a Problem — mobile-optimised form |
 | `/blog` | Blog (Notion embed) |
@@ -61,14 +61,12 @@ All data files live in `/data/`. **No raw grievance records are exposed publicly
 | File | Description |
 |---|---|
 | `data/ward-heatmap.json` | **PLACEHOLDER** — pre-aggregated normalised severity scores (0–1) per ward per category. Replace with pipeline output when confirmed. |
-| `data/ward-boundaries.json` | **PLACEHOLDER** — simplified bounding-box GeoJSON for 20 stub wards. **TODO: replace with verified 198-ward GeoJSON** from BBMP/OpenCity/OSM admin boundaries. |
-| `data/ward-corporation-map.json` | **PLACEHOLDER** — stub mapping of 198 wards to 5 GBA corporations. **TODO: replace with verified official mapping.** |
+| `data/gba-ward-boundaries.json` | GBA 369-ward boundaries (final delimitation notified 19 Nov 2025, Dec 2025 ward names), simplified with mapshaper. Source: [OpenCity — GBA Wards Delimitation 2025](https://data.opencity.in/dataset/gba-wards-delimitation-2025). `ward_num` is a site-wide key (1–369); `ward_id` is the official number within the corporation. |
+| `data/gba-corporations.json` | Outlines of the 5 GBA city corporations (Central, North, East, South, West), dissolved from the ward boundaries. |
+| `data/legacy-bbmp-ward-centroids.json` | Centroids of the old 198 BBMP wards, mapped to the containing GBA ward. Used only to assign testimonials still keyed by the old ward numbers to a GBA ward. |
 
-### TODO: Ward GeoJSON
-The dashboard map requires verified 198-ward polygon boundaries. Candidate sources:
-- data.opencity.in
-- BBMP Open Data portal
-- OpenStreetMap admin boundaries (Overpass API)
+### Ward GeoJSON
+Corporation colours and names live in `src/config/gba.ts`; geometry helpers in `src/lib/geo.ts`.
 
 ---
 
@@ -157,7 +155,7 @@ Reports submitted, # endorsed, % verified successful cleanups
 
 #### Shareable Reports
 - Auto-generate simple template for WhatsApp, Telegram, email (with image, location link, short description, and report ID)
-- Quick share button → "Send to BBMP / Ward Officer / WhatsApp Group"
+- Quick share button → "Send to GBA / Ward Officer / WhatsApp Group"
 
 #### Community Updates
 Notifications for:

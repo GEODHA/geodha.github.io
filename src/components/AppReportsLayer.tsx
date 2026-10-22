@@ -1,9 +1,9 @@
 // AppReportsLayer — live GEODHA app report pins, rendered inside WardMap.
 //
-// Pins live in the dedicated `app-reports` map pane so the whole layer can be
-// crossfaded against the ward-level icons by zoom level (see MapSetup in
-// WardMap.tsx). Markers are clustered with leaflet.markercluster and colored
-// by report status (pending / verified / resolved / archived).
+// Pins live in the dedicated `app-reports` map pane, stacked above the ward
+// polygons and below testimonial markers (see MapSetup in WardMap.tsx). Markers are
+// clustered with leaflet.markercluster and colored by report status
+// (pending / verified / resolved / archived).
 
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
@@ -23,7 +23,7 @@ export interface AppReportPin {
   category: string;
   status:   AppReportStatus;
   /**
-   * true when BBMP has marked the underlying Sahaaya complaint closed but the
+   * true when GBA has marked the underlying Sahaaya complaint closed but the
    * reporting user hasn't yet confirmed the issue is actually resolved.
    * Overrides the status-based pin color to yellow (unless status is
    * already 'resolved', which stays green).
@@ -31,7 +31,7 @@ export interface AppReportPin {
   sahaayaClosed?: boolean;
 }
 
-/** Pane that holds app-report pins + their clusters (crossfaded by zoom). */
+/** Pane that holds app-report pins + their clusters. */
 export const APP_REPORTS_PANE = 'app-reports';
 
 export const APP_REPORT_STATUS_COLORS: Record<AppReportStatus, string> = {
@@ -45,7 +45,7 @@ export const APP_REPORT_STATUS_COLORS: Record<AppReportStatus, string> = {
 
 /**
  * Resolves the display color for a pin: green once the user has verified a
- * report resolved, yellow once BBMP has closed the complaint but the user
+ * report resolved, yellow once GBA has closed the complaint but the user
  * hasn't confirmed yet (regardless of app-side status), otherwise falls back
  * to the plain status color (pending = red, verified = yellow, archived = gray).
  */

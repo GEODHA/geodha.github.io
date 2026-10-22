@@ -44,8 +44,8 @@ const WHO_QUALIFIES = [
 const OBLIGATIONS = [
   {
     num: '01',
-    title: 'Register with BBMP',
-    desc: 'All BWGs must register with BBMP as a Bulk Waste Generator. Registration is mandatory before commencing self-processing. Unregistered BWGs face penalties under the SWM Rules.',
+    title: 'Register with GBA',
+    desc: 'All BWGs must register with your GBA city corporation as a Bulk Waste Generator. Registration is mandatory before commencing self-processing. Unregistered BWGs face penalties under the SWM Rules.',
     badge: 'Mandatory',
     badgeColor: C.redMid,
   },
@@ -66,14 +66,14 @@ const OBLIGATIONS = [
   {
     num: '04',
     title: 'Certified transporter for residual waste',
-    desc: 'Dry waste and sanitary waste that cannot be processed on-site must be handed to a BBMP-certified or KSPCB-registered transporter. BSWML doorstep collection is not available for BWGs. Keep records of transporter receipts.',
+    desc: 'Dry waste and sanitary waste that cannot be processed on-site must be handed to a GBA-certified or KSPCB-registered transporter. BSWML doorstep collection is not available for BWGs. Keep records of transporter receipts.',
     badge: 'Mandatory',
     badgeColor: C.redMid,
   },
   {
     num: '05',
     title: 'Digital monitoring & monthly reporting',
-    desc: 'BWGs are required to submit monthly waste generation and processing reports to BBMP digitally. Incoming central government portal (expected within 3 months) will centralise this. Until then, check with your ward office for the current reporting format.',
+    desc: 'BWGs are required to submit monthly waste generation and processing reports to GBA digitally. Incoming central government portal (expected within 3 months) will centralise this. Until then, check with your ward office for the current reporting format.',
     badge: 'Pending portal',
     badgeColor: C.amber,
   },
@@ -243,7 +243,7 @@ export default function BWGGuidePage() {
               government SWM portal launching within 3 months.
             </p>
             <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginBottom: 24 }}>
-              In the meantime, contact your GBA/BBMP/BSWML zonal office.
+              In the meantime, contact your GBA city corporation or BSWML zonal office.
             </p>
             <div className="flex flex-wrap gap-3 justify-center">
               <Link

@@ -27,26 +27,26 @@ export type ReportCategory =
 export type ReportSize = 'small' | 'medium' | 'large';
 export type ReportStatus = 'pending' | 'verified' | 'resolved' | 'archived';
 
-// ── BBMP / Sahaaya complaint lifecycle ────────────────────────────────────────
+// ── GBA / Sahaaya complaint lifecycle ─────────────────────────────────────────
 // Written by the mobile app's submitGrievance.ts (on submit) and the backend
-// pollScheduler.ts (hourly poll against the BBMP Sahaaya portal). Lives at
+// pollScheduler.ts (hourly poll against the GBA Sahaaya portal). Lives at
 // report.sahaaya on the Firestore doc; absent until a complaint is submitted.
 export type SahaayaStatus = 'submitting' | 'submitted' | 'failed' | 'closed';
 
 export interface SahaayaInfo {
   /** App-side complaint lifecycle. */
   status?: SahaayaStatus;
-  /** Registered BBMP complaint ID — shown to users once assigned. */
+  /** Registered GBA complaint ID — shown to users once assigned. */
   grievanceId?: string;
-  /** When the complaint was submitted to BBMP/Sahaaya. */
+  /** When the complaint was submitted to GBA/Sahaaya. */
   submittedAt?: Timestamp;
-  /** Raw status string as last returned by the BBMP portal (debug/display). */
+  /** Raw status string as last returned by the GBA portal (debug/display). */
   lastPolledStatus?: string;
-  /** Timestamp of the latest BBMP poll — source for "updated after X days". */
+  /** Timestamp of the latest GBA poll — source for "updated after X days". */
   lastPolledAt?: Timestamp;
-  /** BBMP staff remarks text from the latest poll. */
+  /** GBA staff remarks text from the latest poll. */
   staffRemarks?: string;
-  /** When BBMP first reported a terminal closed status (fallback for timing). */
+  /** When GBA first reported a terminal closed status (fallback for timing). */
   closedAt?: Timestamp;
 }
 
@@ -114,7 +114,7 @@ export interface Report {
     confidence: number;
     suggestedCategory: string;
   };
-  /** BBMP/Sahaaya complaint tracking — present once a report is submitted to BBMP. */
+  /** GBA/Sahaaya complaint tracking — present once a report is submitted to GBA. */
   sahaaya?: SahaayaInfo;
 }
 

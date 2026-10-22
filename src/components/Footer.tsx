@@ -51,7 +51,7 @@ const Footer = () => {
               href="https://www.reapbenefit.org"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block bg-paper border-2 border-ink/20 rounded-xl p-3 opacity-90 hover:opacity-100 transition-opacity"
+              className="inline-block opacity-90 hover:opacity-100 transition-opacity"
               aria-label="Reap Benefit"
             >
               <img

@@ -40,7 +40,7 @@ export const en = {
     contact: 'Contact Us',
     androidApp: 'Android App — Google Play',
     iosApp: 'iOS App — App Store',
-    rights: '© 2026 GEODHA. All rights reserved.',
+    rights: '2026 GEODHA — an open, volunteer-run community initiative.',
   },
   // Landing page (src/pages/Index.tsx) — full copy, section by section.
   landing: {
@@ -89,8 +89,8 @@ export const en = {
     statCaseStudies: 'Documented case studies',
 
     solutions2Kicker: 'Our Solutions · 02',
-    solutions2Title: "The whole city's waste, mapped.",
-    solutions2Body: "Every ward's garbage situation — live, open and public. Tap any ward for details and recommended actions.",
+    solutions2Title: "Bengaluru's waste, on the map.",
+    solutions2Body: "Every report from GEODHA users, plotted live across Bengaluru — see what's been flagged near you and what's been fixed. Open, public, and growing with every report.",
 
     blogTitle: 'Blog',
     blogBody: 'Waste management and circular economy ideas.',

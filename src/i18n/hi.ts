@@ -42,7 +42,7 @@ export const hi: Dict = {
     contact: 'संपर्क करें',
     androidApp: 'Android ऐप — Google Play',
     iosApp: 'iOS ऐप — App Store',
-    rights: '© 2026 GEODHA. सर्वाधिकार सुरक्षित।',
+    rights: '2026 GEODHA — एक खुली, स्वयंसेवकों द्वारा संचालित सामुदायिक पहल।',
   },
   // Landing page (src/pages/Index.tsx) — full copy, section by section.
   landing: {
@@ -91,8 +91,8 @@ export const hi: Dict = {
     statCaseStudies: 'दस्तावेज़ित केस स्टडी',
 
     solutions2Kicker: 'हमारे समाधान · 02',
-    solutions2Title: 'पूरे शहर का कचरा, नक्शे पर।',
-    solutions2Body: 'हर वार्ड में कचरे की स्थिति — लाइव, खुली और सार्वजनिक। विवरण और सुझाए गए कदमों के लिए किसी भी वार्ड पर टैप करें।',
+    solutions2Title: 'बेंगलुरु का कचरा, नक्शे पर।',
+    solutions2Body: 'GEODHA उपयोगकर्ताओं की हर रिपोर्ट, बेंगलुरु भर में लाइव नक्शे पर — देखें आपके आस-पास क्या दर्ज हुआ है और क्या ठीक हुआ है। खुला, सार्वजनिक, और हर रिपोर्ट के साथ बढ़ता हुआ।',
 
     blogTitle: 'ब्लॉग',
     blogBody: 'कचरा प्रबंधन और सर्कुलर इकॉनमी के विचार।',

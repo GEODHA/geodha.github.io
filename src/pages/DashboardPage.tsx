@@ -2,14 +2,13 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
-  X, Camera, AlertTriangle, ArrowRight, Search, Loader2, AlertCircle,
-  Maximize2, Minimize2, LocateFixed, Share2, Check, ExternalLink,
+  X, Camera, ArrowRight, Search, MapPin,
+  Maximize2, Minimize2, LocateFixed, Share2, Check, Loader2,
   ChevronLeft, ChevronRight, Info,
 } from 'lucide-react';
 
 import WardMap from '@/components/WardMap';
 import MapErrorBoundary from '@/components/MapErrorBoundary';
-import type { TestimonialMarkerInfo } from '@/components/WardMap';
 import { APP_REPORT_STATUS_COLORS } from '@/components/AppReportsLayer';
 import type { AppReportPin, AppReportStatus } from '@/components/AppReportsLayer';
 
@@ -20,36 +19,18 @@ import type { Report } from '@/services/reportsService';
 import { formatDistanceToNow, format, differenceInCalendarDays } from 'date-fns';
 import { ThumbsUp } from 'lucide-react';
 
-// ── Shared ward-boundary geometry helpers ─────────────────────────────────────
-import { ZONE_LOOKUP, WARD_CENTROIDS, findWardForPoint } from '@/lib/geo';
+// ── GBA ward-boundary geometry helpers ────────────────────────────────────────
+import {
+  WARD_FEATURES, WARD_PROPS, findWardForPoint, legacyToGbaWard,
+} from '@/lib/geo';
+import { CORPORATIONS, CORPORATION_LIST } from '@/config/gba';
 import { trackEvent } from '@/lib/analytics';
 
 // ── Firebase hooks ────────────────────────────────────────────────────────────
-import { useWardStats }            from '@/hooks/useWardStats';
-import { useRecommendedActionsDB } from '@/hooks/useRecommendedActionsDB';
-import { useTestimonialsDB }       from '@/hooks/useTestimonialsDB';
+import { useTestimonialsDB } from '@/hooks/useTestimonialsDB';
 
 // ── Shared types ──────────────────────────────────────────────────────────────
-import type { WardData, RecommendedActionDoc, ProblemCategory, TestimonialDoc } from '@/services/geodhaService';
-
-// ── Severity scale ────────────────────────────────────────────────────────────
-import { computeScale, BAND } from '@/lib/severity';
-import type { BandLevel, ClassifyFn } from '@/lib/severity';
-
-// ── Scale hook (depends on live Firebase ward data) ───────────────────────────
-
-function useScales(wardDataMap: Record<number, WardData>) {
-  return useMemo(() => {
-    const wards = Object.values(wardDataMap);
-    if (wards.length === 0) return null;
-    return {
-      dump:  computeScale(wards.map((w) => w.garbage_dump)),
-      veh:   computeScale(wards.map((w) => w.garbage_vehicle_not_arrived)),
-      burn:  computeScale(wards.map((w) => w.burning_of_garbage)),
-      total: computeScale(wards.map((w) => w.total_reports)),
-    };
-  }, [wardDataMap]);
-}
+import type { TestimonialDoc } from '@/services/geodhaService';
 
 // ── Date formatter — "2026-04-15" → "April 2026" ─────────────────────────────
 
@@ -58,16 +39,6 @@ function formatMonthYear(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00'); // force local-date parse
   if (isNaN(d.getTime())) return '';
   return d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-}
-
-// ── Action-step template resolver ─────────────────────────────────────────────
-// Supported placeholders (set in Firestore, resolved at render time):
-//   {ward_num}   → raw ward number, e.g. "12"
-//   {ward_phone} → ward marshal phone, e.g. "9448197012"  (9448197 + 3-digit padded ward_num)
-
-function resolveStep(text: string, wardNum: number): string {
-  const phone = `9448197${String(wardNum).padStart(3, '0')}`;
-  return text.replace(/\{ward_num\}/g, String(wardNum)).replace(/\{ward_phone\}/g, phone);
 }
 
 // ── Link renderer (supports [text](url) and bare https:// URLs in quote text) ──
@@ -92,37 +63,18 @@ function renderWithLinks(text: string): React.ReactNode {
   return nodes.length === 1 ? nodes[0] : <>{nodes}</>;
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Testimonial → GBA ward placement ──────────────────────────────────────────
+// Testimonials in Firestore carry a legacy BBMP (198-ward) ward_num. Exact-GPS
+// entries are matched to the GBA ward containing the point; the rest fall back
+// to the GBA ward containing their old BBMP ward's centroid. Used to label each
+// carousel card and to focus the map on it.
 
-function GarbageMoundIcon({ size = 20 }: { size?: number }) {
-  const h = Math.round(size * 0.88);
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={h} viewBox="0 0 18 16" aria-hidden="true">
-      <ellipse cx="9" cy="14.5" rx="8.5" ry="1.5" fill="#57534e" />
-      <path d="M1.5 14.5 C2 9.5 5 7 9 6.5 C13 7 16 9.5 16.5 14.5 Z" fill="#78716c" />
-      <line x1="6"  y1="9" x2="5"  y2="5" stroke="#a8a29e" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="9"  y1="7" x2="9"  y2="3" stroke="#a8a29e" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="12" y1="9" x2="13" y2="5" stroke="#a8a29e" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ProblemIcon({ category, size }: { category: ProblemCategory; size?: number }) {
-  if (category === 'garbage_dump') return <GarbageMoundIcon size={size ?? 22} />;
-  const emoji = category === 'burning_of_garbage' ? '🔥' : '🚛';
-  return <span style={{ fontSize: size ? `${size}px` : '1.375rem', lineHeight: 1 }}>{emoji}</span>;
-}
-
-function BandBadge({ band, size = 'sm' }: { band: BandLevel; size?: 'sm' | 'lg' }) {
-  const cfg = BAND[band];
-  return (
-    <span
-      className={`inline-block font-bold rounded-full ${size === 'lg' ? 'text-sm px-3 py-1' : 'text-[11px] px-2 py-0.5'}`}
-      style={{ background: cfg.badgeBg, color: cfg.badgeFg }}
-    >
-      {cfg.label}
-    </span>
-  );
+function testimonialGbaWard(t: TestimonialDoc): number | null {
+  if (t.has_exact_location && t.exact_lat != null && t.exact_lng != null) {
+    const w = findWardForPoint(t.exact_lat, t.exact_lng);
+    if (w != null) return w;
+  }
+  return legacyToGbaWard(t.ward_num);
 }
 
 // ── Image lightbox (carousel) ────────────────────────────────────────────────
@@ -204,27 +156,24 @@ function ImageLightbox({ images, initialIndex, onClose }: {
 
 // ── Ward search ───────────────────────────────────────────────────────────────
 
-function WardSearch({
-  wardDataMap,
-  onSelect,
-}: {
-  wardDataMap: Record<number, WardData>;
-  onSelect: (wardNum: number, data: WardData, zone: string) => void;
-}) {
+const SEARCHABLE_WARDS = WARD_FEATURES
+  .map((f) => f.properties)
+  .sort((a, b) => a.ward_name.localeCompare(b.ward_name));
+
+function WardSearch({ onSelect }: { onSelect: (wardNum: number) => void }) {
   const [query,         setQuery]         = useState('');
   const [open,          setOpen]          = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const sorted = useMemo(
-    () => Object.values(wardDataMap).sort((a, b) => a.ward_name.localeCompare(b.ward_name)),
-    [wardDataMap],
-  );
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q.length === 0 ? sorted : sorted.filter((w) => w.ward_name.toLowerCase().includes(q));
-  }, [query, sorted]);
+    if (q.length === 0) return SEARCHABLE_WARDS;
+    return SEARCHABLE_WARDS.filter((w) =>
+      w.ward_name.toLowerCase().includes(q) ||
+      w.ward_name_kn.includes(query.trim()) ||
+      CORPORATIONS[w.corp_id].key.toLowerCase() === q);
+  }, [query]);
 
   const reposition = () => {
     if (!wrapperRef.current) return;
@@ -234,10 +183,10 @@ function WardSearch({
 
   const handleOpen = () => { reposition(); setOpen(true); };
 
-  const choose = (w: WardData) => {
-    setQuery(w.ward_name);
+  const choose = (wardNum: number, name: string) => {
+    setQuery(name);
     setOpen(false);
-    onSelect(w.ward_num, w, ZONE_LOOKUP[w.ward_num] ?? '');
+    onSelect(wardNum);
   };
 
   return (
@@ -247,27 +196,41 @@ function WardSearch({
         <input
           type="text"
           value={query}
-          placeholder="Search ward by name…"
+          placeholder="Search GBA ward by name…"
           onChange={(e) => { setQuery(e.target.value); handleOpen(); }}
           onFocus={handleOpen}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && filtered.length > 0) {
+              choose(filtered[0].ward_num, filtered[0].ward_name);
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
           className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white shadow-sm
                      focus:outline-none focus:ring-1 focus:ring-gray-300 text-gray-700 placeholder-gray-400"
         />
       </div>
-      {open && filtered.length > 0 && createPortal(
+      {open && createPortal(
         <div
           style={{ ...dropdownStyle, zIndex: 99999 }}
           className="bg-white border border-gray-200 rounded-lg shadow-xl max-h-52 overflow-y-auto"
         >
+          {filtered.length === 0 && (
+            <p className="px-3 py-2.5 text-xs text-gray-500">
+              No GBA ward named “{query.trim()}”. Older areas may now be split across differently named wards — try a nearby name.
+            </p>
+          )}
           {filtered.slice(0, 25).map((w) => (
             <button
               key={w.ward_num}
               className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between"
-              onMouseDown={() => choose(w)}
+              onMouseDown={() => choose(w.ward_num, w.ward_name)}
             >
               <span>{w.ward_name}</span>
-              <span className="text-[10px] text-gray-400 ml-2">#{w.ward_num}</span>
+              <span className="text-[10px] ml-2 flex items-center gap-1 text-gray-400">
+                <span className="h-2 w-2 rounded-full" style={{ background: CORPORATIONS[w.corp_id].color }} />
+                {CORPORATIONS[w.corp_id].key} #{w.ward_id}
+              </span>
             </button>
           ))}
         </div>,
@@ -277,385 +240,221 @@ function WardSearch({
   );
 }
 
-// ── Ward detail bottom sheet ──────────────────────────────────────────────────
+// ── Selected-ward label (floats over the map) ─────────────────────────────────
+// Replaces hover tooltips on touch screens: tapping a ward shows its name here.
 
-interface WardSheetProps {
-  data:            WardData;
-  zone:            string;
-  scales:          { dump: ClassifyFn; veh: ClassifyFn; burn: ClassifyFn; total: ClassifyFn };
-  actions:         Record<ProblemCategory, RecommendedActionDoc> | null;
-  allTestimonials: TestimonialDoc[];
-  onClose:         () => void;
+function SelectedWardLabel({ wardNum, onClose }: { wardNum: number; onClose: () => void }) {
+  const ward = WARD_PROPS[wardNum];
+  if (!ward) return null;
+  const corp = CORPORATIONS[ward.corp_id];
+  return (
+    <div className="absolute bottom-7 left-1/2 -translate-x-1/2 z-[999] max-w-[calc(100%-1.5rem)]">
+      <div
+        className="flex items-center gap-2.5 bg-white/95 backdrop-blur border border-gray-200 rounded-xl shadow-lg pl-3 pr-1.5 py-2"
+        style={{ borderLeft: `4px solid ${corp.color}` }}
+      >
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-gray-900 leading-tight truncate" style={{ fontFamily: "'Archivo', sans-serif" }}>
+            {ward.ward_name}
+            {ward.ward_name_kn && <span className="ml-1.5 text-xs font-medium text-gray-400">{ward.ward_name_kn}</span>}
+          </p>
+          <p className="text-[11px] text-gray-500 truncate">
+            Ward {ward.ward_id} · {corp.name}
+          </p>
+        </div>
+        <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-700 shrink-0" aria-label="Clear selected ward">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
-function WardSheet({ data, zone, scales, actions, allTestimonials, onClose }: WardSheetProps) {
-  const overallBand  = scales.total(data.total_reports) as BandLevel;
-  const testimonials = allTestimonials.filter(
-    (t) => t.ward_num === data.ward_num || (t.extra_ward_nums ?? []).includes(data.ward_num),
-  );
+// ── Testimonials carousel (below the map) ─────────────────────────────────────
 
-  // Share state
-  const [copied, setCopied] = useState(false);
+type TestimonialFilter = 'all' | 'problems' | 'successes';
 
-  // Image lightbox state
-  // allImages = full-resolution URLs for the lightbox
-  // allThumbs = 300px thumbnails for the preview strip (falls back to full URL)
-  const allImages = testimonials.flatMap((t) => t.images);
-  const allThumbs = testimonials.flatMap((t) =>
-    t.images.map((url, i) => t.thumb_images?.[i] ?? url)
-  );
-  const [lightbox, setLightbox] = useState<{ idx: number } | null>(null);
+function TestimonialSlide({ t, wardNum, onShowWard, onOpenImages }: {
+  t:            TestimonialDoc;
+  wardNum:      number | null;
+  onShowWard:   (wardNum: number) => void;
+  onOpenImages: (images: string[], idx: number) => void;
+}) {
+  const positive = t.is_positive ?? false;
+  const ward     = wardNum != null ? WARD_PROPS[wardNum] : undefined;
+  const corp     = ward ? CORPORATIONS[ward.corp_id] : undefined;
+  const thumb    = t.thumb_images?.[0] ?? t.images[0];
 
-  // Active problem (for recommended-action selection)
-  const [activeCategory, setActiveCategory] = useState<ProblemCategory | null>(null);
-  useEffect(() => { setActiveCategory(null); }, [data.ward_num]);
+  // Long quotes are clamped to 5 lines; show a toggle only when they overflow.
+  const [expanded,  setExpanded]  = useState(false);
+  const [overflows, setOverflows] = useState(false);
+  const quoteRef = useRef<HTMLQuoteElement>(null);
 
-  const handleShare = async () => {
-    trackEvent('share_click', { target: 'ward', ward_num: data.ward_num });
-    const url  = `${window.location.origin}/dashboard?ward=${data.ward_num}`;
-    const text = `📍 ${data.ward_name} (BBMP Ward ${data.ward_num}) — see garbage-related issues reported in this ward on GEODHA`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: data.ward_name, text, url });
-        return;
-      } catch (err) {
-        // User dismissed the share sheet — don't fall through to clipboard
-        if ((err as Error).name === 'AbortError') return;
-        // Any other error → fall through to clipboard
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2200);
-    } catch { /* ignore */ }
-  };
-
-  const problems: { category: ProblemCategory; label: string; band: BandLevel; count: number }[] = [
-    { category: 'garbage_dump',               label: 'Garbage Dumps',      band: scales.dump(data.garbage_dump)                as BandLevel, count: data.garbage_dump },
-    { category: 'garbage_vehicle_not_arrived', label: 'Missed Collections', band: scales.veh(data.garbage_vehicle_not_arrived) as BandLevel, count: data.garbage_vehicle_not_arrived },
-    { category: 'burning_of_garbage',         label: 'Open Burning',       band: scales.burn(data.burning_of_garbage)          as BandLevel, count: data.burning_of_garbage },
-  ].sort((a, b) => b.band !== a.band ? b.band - a.band : b.count - a.count);
-
-  const top      = problems[0];
-  const others   = problems.slice(1).filter((p) => p.band >= 2);
-  const allClean = problems.every((p) => p.band <= 1);
-
-  // Which problem's recommended action to show — defaults to #1
-  const shownCategory   = activeCategory ?? top.category;
-  const shownProblem    = problems.find((p) => p.category === shownCategory) ?? top;
-  const action          = actions?.[shownCategory] ?? null;
+  useEffect(() => {
+    const el = quoteRef.current;
+    if (!el || expanded) return;
+    const measure = () => setOverflows(el.scrollHeight > el.clientHeight + 1);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [expanded, t.quote]);
 
   return (
-    <>
-      {/* Image lightbox portal */}
-      {lightbox && allImages.length > 0 && (
-        <ImageLightbox
-          images={allImages}
-          initialIndex={lightbox.idx}
-          onClose={() => setLightbox(null)}
-        />
-      )}
-
-      <div className="flex flex-col">
-        <div className="flex items-start justify-between px-5 pt-3 pb-3 border-b border-gray-100">
-          <div>
-            <h2 className="text-xl font-bold leading-tight" style={{ fontFamily: "'Archivo', sans-serif" }}>
-              {data.ward_name}
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Ward {data.ward_num}{zone ? ` · ${zone}` : ''}
-            </p>
-          </div>
-          <div className="flex items-center gap-1.5 ml-3 mt-0.5">
-            <BandBadge band={overallBand} size="sm" />
-            {/* Share ward */}
-            <button
-              onClick={handleShare}
-              title={copied ? 'Link copied!' : 'Share this ward'}
-              className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
-              aria-label="Share"
-            >
-              {copied
-                ? <Check className="h-3.5 w-3.5 text-green-500" />
-                : <Share2 className="h-3.5 w-3.5 text-gray-400" />}
-            </button>
-            <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-700" aria-label="Close">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="overflow-y-auto" style={{ maxHeight: 'calc(82vh - 100px)', paddingBottom: 'env(safe-area-inset-bottom, 1.5rem)' }}>
-
-          {/* Problems */}
-          <div className="px-5 pt-4 pb-3">
-            {allClean ? (
-              <div className="space-y-3">
-                {/* Clean status */}
-                <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3.5">
-                  <span className="text-2xl">✅</span>
-                  <div>
-                    <p className="text-sm font-semibold text-green-800">Low reported issues</p>
-                    <p className="text-xs text-green-700 mt-0.5">This ward has minimal complaints across all waste categories.</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* #1 Problem card — clickable to re-select */}
-                <button
-                  className={`w-full text-left rounded-xl border-2 p-4 transition-all ${shownCategory === top.category ? 'ring-2 ring-offset-1' : 'opacity-90 hover:opacity-100'}`}
-                  style={{
-                    borderColor: BAND[top.band].dot,
-                    background:  BAND[top.band].cardBg,
-                    ...(shownCategory === top.category ? { outlineColor: BAND[top.band].dot } : {}),
-                  }}
-                  onClick={() => setActiveCategory(top.category)}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="leading-none flex items-center"><ProblemIcon category={top.category} size={24} /></span>
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">#1 Problem</p>
-                        <p className="text-base font-bold text-gray-900 leading-tight">{top.label}</p>
-                      </div>
-                    </div>
-                    <BandBadge band={top.band} size="lg" />
-                  </div>
-                  {top.band >= 4 && (
-                    <p className="text-xs text-gray-600 mt-1 flex items-start gap-1.5">
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: BAND[top.band].dot }} />
-                      Among the highest affected wards in the city for this issue.
-                    </p>
-                  )}
-                </button>
-
-                {/* Secondary problems — clickable to view their recommended action */}
-                {others.map((p, i) => (
-                  <button
-                    key={p.category}
-                    onClick={() => setActiveCategory(p.category)}
-                    className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg border transition-all ${
-                      shownCategory === p.category
-                        ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-200'
-                        : 'bg-gray-50 border-gray-100 hover:bg-gray-100 hover:border-gray-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <span className="leading-none opacity-80 flex items-center"><ProblemIcon category={p.category} size={18} /></span>
-                      <span className="font-medium">
-                        <span className="text-[10px] text-gray-400 font-semibold mr-1">#{i + 2}</span>
-                        {p.label}
-                      </span>
-                    </div>
-                    <BandBadge band={p.band} />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="mx-5 border-t border-gray-100" />
-          
-          
-
-          {/* Photos */}
-          {allImages.length > 0 ? (
-            <section className="px-5 pt-4 pb-2">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Photos</h3>
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {allImages.map((_src, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setLightbox({ idx: i })}
-                    className="flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
-                    aria-label={`View photo ${i + 1}`}
-                  >
-                    <img
-                      src={allThumbs[i]}
-                      alt={`Ward photo ${i + 1}`}
-                      className="h-28 w-28 object-cover"
-                      loading="lazy"
-                    />
-                  </button>
-                ))}
-              </div>
-            </section>
-          ) : (
-            <section className="px-5 pt-4 pb-2">
-              <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-50 rounded-lg px-3 py-2.5 border border-dashed border-gray-200">
-                <Camera className="h-3.5 w-3.5" />
-                Photos will appear here when available for this ward.
-              </div>
-            </section>
+    <article
+      className={`snap-start shrink-0 w-[85%] sm:w-[340px] flex flex-col rounded-xl border overflow-hidden bg-white ${
+        positive ? 'border-green-200' : 'border-amber-200'
+      }`}
+    >
+      {thumb ? (
+        <button
+          onClick={() => onOpenImages(t.images, 0)}
+          className="relative h-36 w-full bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400"
+          aria-label={`View photos for ${t.title}`}
+        >
+          <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" />
+          {t.images.length > 1 && (
+            <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] font-semibold rounded-full px-2 py-0.5">
+              +{t.images.length - 1}
+            </span>
           )}
+        </button>
+      ) : null}
 
-          {/* Testimonials — split into negative (amber) and positive (green) */}
-          {testimonials.length > 0 && (() => {
-            const negative = testimonials.filter((t) => !(t.is_positive ?? false));
-            const positive = testimonials.filter((t) =>   t.is_positive ?? false);
-            return (
-              <>
-                {negative.length > 0 && (
-                  <>
-                    <div className="mx-5 mt-3 border-t border-gray-100" />
-                    <section className="px-5 pt-4 pb-2">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3">Citizen Testimonials &amp; Insights</h3>
-                      <div className="space-y-3">
-                        {negative.map((c) => (
-                          <div key={c.id} className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 space-y-2">
-                            <p className="text-xs font-bold text-gray-800 leading-snug">{c.title}</p>
-                            <blockquote className="text-xs italic text-gray-600 leading-relaxed border-l-2 border-amber-400 pl-2.5">
-                              "{renderWithLinks(c.quote)}"
-                            </blockquote>
-                            <p className="text-[10px] text-gray-400">
-                              {c.source}{c.locality ? ` · ${c.locality}` : ''}{c.date ? ` · ${formatMonthYear(c.date)}` : ''}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  </>
-                )}
-                {positive.length > 0 && (
-                  <>
-                    <div className="mx-5 mt-3 border-t border-gray-100" />
-                    <section className="px-5 pt-4 pb-2">
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-3 flex items-center gap-1.5">
-                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-green-700 text-white text-[9px] font-black">✓</span>
-                        Success Stories
-                      </h3>
-                      <div className="space-y-3">
-                        {positive.map((c) => (
-                          <div key={c.id} className="bg-green-50 border border-green-200 rounded-xl p-3.5 space-y-2">
-                            <p className="text-xs font-bold text-gray-800 leading-snug">{c.title}</p>
-                            <blockquote className="text-xs italic text-gray-600 leading-relaxed border-l-2 border-green-500 pl-2.5">
-                              "{renderWithLinks(c.quote)}"
-                            </blockquote>
-                            <p className="text-[10px] text-gray-400">
-                              {c.source}{c.locality ? ` · ${c.locality}` : ''}{c.date ? ` · ${formatMonthYear(c.date)}` : ''}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  </>
-                )}
-              </>
-            );
-          })()}
-
-          {/* Recommended Action */}
-          {!allClean && action && (
-            <>
-              <div className="mx-5 mt-3 border-t border-gray-100" />
-              <section className="px-5 pt-4 pb-2">
-                {/* Violation context card */}
-                <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 flex items-start gap-2 mb-3">
-                  <span className="leading-none mt-0.5 flex items-center shrink-0"><ProblemIcon category={shownCategory} size={20} /></span>
-                  <div>
-                    <p className="text-sm font-bold text-gray-800">{action.label}</p>
-                    <p className="text-xs mt-0.5 leading-relaxed text-gray-500">{action.violation}</p>
-                  </div>
-                </div>
-
-                {/* Steps */}
-                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                  Recommended Actions
-                </h3>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl overflow-hidden">
-                  <div className="divide-y divide-gray-100">
-                    {action.steps.map((s, i) => {
-                      const heading  = resolveStep(s.heading,          data.ward_num);
-                      const detail   = resolveStep(s.detail,           data.ward_num);
-                      const url      = s.url     ? resolveStep(s.url,     data.ward_num) : undefined;
-                      const urlText  = s.urlText ? resolveStep(s.urlText, data.ward_num) : undefined;
-                      return (
-                        <div key={i} className="flex gap-3 px-4 py-3">
-                          <span className="text-base leading-none mt-0.5 shrink-0">{s.emoji}</span>
-                          <div>
-                            <p className="text-xs font-semibold text-gray-800">{heading}</p>
-                            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{detail}</p>
-                            {url && (
-                              <a
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline mt-1"
-                              >
-                                {urlText?.trim() || 'Learn more'} <ExternalLink className="h-2.5 w-2.5" />
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </section>
-            </>
-          )}
-
-          <div className="px-5 pt-4 pb-3">
-            {allClean ? (
-              <div className="space-y-3">
-                {/* Report a problem */}
-                <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3.5 space-y-1.5">
-                  <p className="text-xs font-bold text-blue-800">🗑️ See a garbage problem?</p>
-                  <p className="text-xs text-blue-700 leading-relaxed">
-                    File a complaint on{' '}
-                    <a href="https://nammabengaluru.org.in" target="_blank" rel="noopener noreferrer"
-                      className="underline font-semibold">nammabengaluru.org.in</a>
-                    {' '}or call your Ward {data.ward_num} Marshall directly at{' '}
-                    <a href={`tel:9448197${String(data.ward_num).padStart(3, '0')}`}
-                      className="underline font-semibold text-blue-900">
-                      9448197{String(data.ward_num).padStart(3, '0')}
-                    </a>.
-                  </p>
-                </div>
-
-                {/* Segregation guide */}
-                <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3.5 space-y-1.5">
-                  <p className="text-xs font-bold text-blue-800">♻️ Practising good waste habits?</p>
-                  <p className="text-xs text-blue-700 leading-relaxed">
-                    Learn the 4-stream segregation rules for Bengaluru — wet, dry, sanitary, and hazardous.<br />{' '}
-                    <Link to="/guide" className="underline font-semibold text-blue-900">
-                      Read our segregation guide →
-                    </Link>
-                  </p>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          {/* CTA */}
-          <div className="px-5 pt-4 pb-6">
-            <Link
-              to="/report"
-              onClick={() => window.scrollTo(0, 0)}
-              className="flex items-center justify-between w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 shadow-sm hover:shadow transition-shadow"
-            >
-              <div>
-                <p className="text-sm font-semibold text-gray-800">Need more guidance?</p>
-                <p className="text-xs text-gray-500 mt-0.5">Want to add a report or tell us about an issue in your area?</p>
-              </div>
-              <div className="shrink-0 ml-3 h-8 w-8 rounded-full flex items-center justify-center" style={{ background: 'var(--gradient-hero)' }}>
-                <ArrowRight className="h-4 w-4 text-white" />
-              </div>
-            </Link>
-          </div>
-        </div>
+      <div className={`flex-1 flex flex-col p-3.5 space-y-2 ${positive ? 'bg-green-50' : 'bg-amber-50'}`}>
+        <span className={`self-start inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 text-white ${
+          positive ? 'bg-green-700' : 'bg-red-800'
+        }`}>
+          {positive ? '✓ Success story' : '! Problem'}
+        </span>
+        <p className="text-sm font-bold text-gray-800 leading-snug">{t.title}</p>
+        <blockquote
+          ref={quoteRef}
+          className={`text-xs italic text-gray-600 leading-relaxed border-l-2 pl-2.5 whitespace-pre-line ${expanded ? '' : 'line-clamp-5'} ${positive ? 'border-green-500' : 'border-amber-400'}`}
+        >
+          "{renderWithLinks(t.quote)}"
+        </blockquote>
+        {(overflows || expanded) && (
+          <button
+            onClick={() => setExpanded((e) => !e)}
+            aria-expanded={expanded}
+            className={`self-start text-xs font-semibold underline underline-offset-2 ${positive ? 'text-green-800 hover:text-green-900' : 'text-amber-800 hover:text-amber-900'}`}
+          >
+            {expanded ? 'Show less' : 'Read more'}
+          </button>
+        )}
+        <p className="text-[10px] text-gray-400">
+          {t.source}{t.locality ? ` · ${t.locality}` : ''}{t.date ? ` · ${formatMonthYear(t.date)}` : ''}
+        </p>
+        {ward && corp && (
+          <button
+            onClick={() => onShowWard(ward.ward_num)}
+            className="mt-auto self-start inline-flex items-center gap-1 text-[11px] font-semibold text-gray-700 bg-white border border-gray-200 rounded-full px-2.5 py-1 hover:bg-gray-50"
+          >
+            <MapPin className="h-3 w-3" style={{ color: corp.color }} />
+            {ward.ward_name} · {corp.key}
+          </button>
+        )}
       </div>
-    </>
+    </article>
   );
 }
 
-// ── BBMP / Sahaaya complaint status card ──────────────────────────────────────
-// Red by default (open/in-progress), yellow once BBMP marks it closed (pending
+function TestimonialsCarousel({ testimonials, onShowWard }: {
+  testimonials: TestimonialDoc[];
+  onShowWard:   (wardNum: number) => void;
+}) {
+  const [filter,   setFilter]   = useState<TestimonialFilter>('all');
+  const [lightbox, setLightbox] = useState<{ images: string[]; idx: number } | null>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const counts = useMemo(() => ({
+    all:       testimonials.length,
+    problems:  testimonials.filter((t) => !(t.is_positive ?? false)).length,
+    successes: testimonials.filter((t) =>   t.is_positive ?? false).length,
+  }), [testimonials]);
+
+  // Newest first; critical problems ahead of others on the same date.
+  const items = useMemo(() => testimonials
+    .filter((t) => filter === 'all' || (filter === 'successes') === (t.is_positive ?? false))
+    .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || Number(b.critical_or_not) - Number(a.critical_or_not))
+    .map((t) => ({ t, wardNum: testimonialGbaWard(t) })),
+  [testimonials, filter]);
+
+  useEffect(() => { trackRef.current?.scrollTo({ left: 0 }); }, [filter]);
+
+  const scrollBy = (dir: 1 | -1) => {
+    const el = trackRef.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: 'smooth' });
+  };
+
+  if (testimonials.length === 0) return null;
+
+  const chip = (key: TestimonialFilter, label: string) => (
+    <button
+      key={key}
+      onClick={() => setFilter(key)}
+      aria-pressed={filter === key}
+      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+        filter === key ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+      }`}
+    >
+      {label} <span className="opacity-60">{counts[key]}</span>
+    </button>
+  );
+
+  return (
+    <section className="px-4 sm:px-6 pt-5 pb-8 border-t border-gray-100" aria-labelledby="testimonials-heading">
+      {lightbox && (
+        <ImageLightbox images={lightbox.images} initialIndex={lightbox.idx} onClose={() => setLightbox(null)} />
+      )}
+
+      <div className="flex items-end justify-between gap-3 mb-3">
+        <div>
+          <h2 id="testimonials-heading" className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Archivo', sans-serif" }}>
+            Citizen testimonials
+          </h2>
+          <p className="text-xs text-gray-500">Problems residents face and the wins they've had. Tap a ward to find it on the map.</p>
+        </div>
+        <div className="hidden sm:flex items-center gap-1 shrink-0">
+          <button onClick={() => scrollBy(-1)} className="p-2 rounded-full border border-gray-200 hover:bg-gray-50" aria-label="Previous testimonials">
+            <ChevronLeft className="h-4 w-4 text-gray-600" />
+          </button>
+          <button onClick={() => scrollBy(1)} className="p-2 rounded-full border border-gray-200 hover:bg-gray-50" aria-label="Next testimonials">
+            <ChevronRight className="h-4 w-4 text-gray-600" />
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 mb-3" role="group" aria-label="Filter testimonials">
+        {chip('all', 'All')}
+        {chip('problems', 'Problems')}
+        {chip('successes', 'Success stories')}
+      </div>
+
+      <div
+        ref={trackRef}
+        className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-px-4 sm:scroll-px-0"
+      >
+        {items.map(({ t, wardNum }) => (
+          <TestimonialSlide
+            key={t.id}
+            t={t}
+            wardNum={wardNum}
+            onShowWard={onShowWard}
+            onOpenImages={(images, idx) => setLightbox({ images, idx })}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ── GBA / Sahaaya complaint status card ──────────────────────────────────────
+// Red by default (open/in-progress), yellow once GBA marks it closed (pending
 // user confirmation), green once the user has verified it resolved.
 
-function BbmpStatusCard({ report }: { report: Report }) {
+function ComplaintStatusCard({ report }: { report: Report }) {
   const sahaaya = report.sahaaya;
   const userVerified   = report.status === 'resolved';
   const officiallyClosed = sahaaya?.status === 'closed';
@@ -679,7 +478,7 @@ function BbmpStatusCard({ report }: { report: Report }) {
     <section className={`mx-5 mt-4 rounded-xl border p-4 space-y-2 ${tone.bg} ${tone.border}`}>
       {sahaaya?.grievanceId && (
         <p className={`text-xs font-bold ${tone.label}`}>
-          BBMP Complaint ID: <span className="font-mono">{sahaaya.grievanceId}</span>
+          GBA Complaint ID: <span className="font-mono">{sahaaya.grievanceId}</span>
         </p>
       )}
 
@@ -690,12 +489,12 @@ function BbmpStatusCard({ report }: { report: Report }) {
       )}
 
       {/* Interim remarks (e.g. "1st Assignment Based on Ward Mapping") aren't
-          real updates — they're re-polled unchanged until BBMP closes the
+          real updates — they're re-polled unchanged until GBA closes the
           complaint, so only show remarks once that's actually happened. */}
       {officiallyClosed && sahaaya?.staffRemarks && (
         <div className={`text-xs ${tone.text} leading-relaxed`}>
           <p className="font-semibold">
-            BBMP remarks{remarkDate ? ` · ${format(remarkDate, 'd MMM yyyy')}` : ''}
+            GBA remarks{remarkDate ? ` · ${format(remarkDate, 'd MMM yyyy')}` : ''}
           </p>
           <p className="italic mt-0.5">"{sahaaya.staffRemarks}"</p>
         </div>
@@ -762,8 +561,8 @@ function ReportSheet({ report, onClose }: { report: Report; onClose: () => void 
 
         <div className="overflow-y-auto" style={{ maxHeight: 'calc(82vh - 100px)', paddingBottom: 'env(safe-area-inset-bottom, 1.5rem)' }}>
 
-          {/* BBMP / Sahaaya complaint status */}
-          <BbmpStatusCard report={report} />
+          {/* GBA / Sahaaya complaint status */}
+          <ComplaintStatusCard report={report} />
 
           {/* Photos */}
           {photos.length > 0 ? (
@@ -901,83 +700,16 @@ function ReportColorLegend({ suffix }: { suffix?: string }) {
 
 // ── Map legend ────────────────────────────────────────────────────────────────
 
-function MapLegend({ mode = 'stats' }: { mode?: 'stats' | 'reports' }) {
-  if (mode === 'reports') {
-    return (
-      <div className="flex items-center gap-0.5 flex-wrap text-[10px] text-gray-500">
-        <span className="flex items-center gap-1 mr-2">
-          <span className="inline-block h-2.5 w-4 rounded-sm border border-gray-400" style={{ background: 'transparent' }} />
-          Ward boundary
-        </span>
-        <ReportColorLegend />
-      </div>
-    );
-  }
-
-  const bands: BandLevel[] = [1, 2, 3, 4, 5];
+function MapLegend() {
   return (
     <div className="flex items-center gap-0.5 flex-wrap text-[10px] text-gray-500">
-      {bands.map((b) => (
-        <span key={b} className="flex items-center gap-1 mr-2">
-          <span className="inline-block h-2.5 w-4 rounded-sm border border-black/8" style={{ background: BAND[b].mapColor }} />
-          {BAND[b].label}
+      {CORPORATION_LIST.map((c) => (
+        <span key={c.id} className="flex items-center gap-1 mr-2" title={c.name}>
+          <span className="inline-block h-2.5 w-4 rounded-sm border-2" style={{ borderColor: c.color, background: `${c.color}55` }} />
+          {c.key}
         </span>
       ))}
-      <span className="flex items-center gap-1 mr-2 ml-1 pl-2 border-l border-gray-200">
-        <GarbageMoundIcon size={14} /><span>🚛🔥</span><span>Top-affected</span>
-      </span>
-      <span className="flex items-center gap-1 ml-1 pl-2 border-l border-gray-200">
-        <span className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-red-600 text-white text-[8px] font-bold">!</span>
-        <span>Reported cases</span>
-      </span>
-      <span className="flex items-center gap-1 ml-1">
-        <span className="inline-flex items-center justify-center h-3.5 w-3.5 rounded-full bg-green-700 text-white text-[8px] font-bold">✓</span>
-        <span>Success stories</span>
-      </span>
-      <ReportColorLegend suffix="(zoom in)" />
-    </div>
-  );
-}
-
-// ── View-mode toggle ──────────────────────────────────────────────────────────
-
-function ViewModeToggle({ mode, onChange }: {
-  mode:     'stats' | 'reports';
-  onChange: (m: 'stats' | 'reports') => void;
-}) {
-  const btnCls = (active: boolean) =>
-    `px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-      active ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-    }`;
-  return (
-    <div className="inline-flex items-center bg-gray-100 rounded-full p-1 shrink-0" role="tablist" aria-label="Dashboard view mode">
-      <button role="tab" aria-selected={mode === 'reports'} className={btnCls(mode === 'reports')} onClick={() => onChange('reports')}>
-        View Only Reports
-      </button>
-      <button role="tab" aria-selected={mode === 'stats'} className={btnCls(mode === 'stats')} onClick={() => onChange('stats')}>
-        View All Statistics
-      </button>
-    </div>
-  );
-}
-
-// ── Loading / error screens ───────────────────────────────────────────────────
-
-function LoadingScreen() {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-3">
-      <Loader2 className="h-7 w-7 text-gray-400 animate-spin" />
-      <p className="text-sm text-gray-500">Loading ward data…</p>
-    </div>
-  );
-}
-
-function ErrorScreen({ message }: { message: string }) {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-3 px-6 text-center">
-      <AlertCircle className="h-8 w-8 text-red-400" />
-      <p className="text-sm font-semibold text-gray-800">Could not load dashboard data</p>
-      <p className="text-xs text-gray-500 max-w-sm">{message}</p>
+      <ReportColorLegend />
     </div>
   );
 }
@@ -986,11 +718,7 @@ function ErrorScreen({ message }: { message: string }) {
 
 const DashboardPage = () => {
   // ── Firebase data ─────────────────────────────────────────────────────────
-  const { wardDataMap, loading: wardLoading, error: wardError }     = useWardStats();
-  const { actions,     loading: actLoading,  error: actError }      = useRecommendedActionsDB();
-  const { testimonials }                                             = useTestimonialsDB();
-
-  const scales = useScales(wardDataMap);
+  const { testimonials } = useTestimonialsDB();
 
   // ── Live app reports (non-blocking — the map works without them) ──────────
   const [authReady, setAuthReady] = useState(false);
@@ -1014,7 +742,7 @@ const DashboardPage = () => {
         title:    r.title,
         category: r.category,
         status:   r.status as AppReportStatus,
-        // BBMP closed the complaint but the user hasn't confirmed it yet → yellow pin.
+        // GBA closed the complaint but the user hasn't confirmed it yet → yellow pin.
         sahaayaClosed: r.sahaaya?.status === 'closed',
       }));
   }, [authReady, reportsLoading, appReports]);
@@ -1024,19 +752,14 @@ const DashboardPage = () => {
   const urlWardHandled = useRef(false);
 
   // ── UI state ──────────────────────────────────────────────────────────────
-  const [selectedWard,   setSelectedWard]   = useState<{ num: number; data: WardData; zone: string } | null>(null);
+  const [selectedWard,   setSelectedWard]   = useState<number | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [sheetOpen,      setSheetOpen]      = useState(false);
-  const [zoomToWard,   setZoomToWard]   = useState<number | null>(null);
+  const [zoomRequest,  setZoomRequest]  = useState<{ wardNum: number; seq: number } | null>(null);
+  const mapAnchorRef = useRef<HTMLDivElement>(null);
   const [fullscreen,   setFullscreen]   = useState(false);
   const [locating,     setLocating]     = useState(false);
   const [dashCopied,   setDashCopied]   = useState(false);
-  const [viewMode,     setViewMode]     = useState<'stats' | 'reports'>('reports');
-
-  const handleViewModeChange = (m: 'stats' | 'reports') => {
-    setViewMode(m);
-    trackEvent('dashboard_view_mode', { mode: m });
-  };
 
   // ── Swipe-to-dismiss state ────────────────────────────────────────────────
   const [dragY,      setDragY]      = useState(0);
@@ -1061,24 +784,26 @@ const DashboardPage = () => {
     }
   };
 
-  const handleWardSelect = (wardNum: number, data: WardData, zone: string) => {
-    setSelectedReport(null);
-    setSelectedWard({ num: wardNum, data, zone });
-    setSheetOpen(true);
+  // Tapping a ward just highlights it and shows its name over the map.
+  const handleWardSelect = (wardNum: number) => {
+    setSelectedWard(wardNum);
     trackEvent('ward_selected', { ward_num: wardNum });
   };
 
-  const handleSearchSelect = (wardNum: number, data: WardData, zone: string) => {
-    setSelectedReport(null);
-    setSelectedWard({ num: wardNum, data, zone });
-    setSheetOpen(true);
-    setZoomToWard(wardNum);
+  // Search / locate / carousel: highlight the ward and fly the map onto it.
+  const focusWard = (wardNum: number) => {
+    handleWardSelect(wardNum);
+    setZoomRequest((z) => ({ wardNum, seq: (z?.seq ?? 0) + 1 }));
+  };
+
+  const showWardFromTestimonial = (wardNum: number) => {
+    focusWard(wardNum);
+    if (!fullscreen) mapAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const handleReportSelect = (reportId: string) => {
     const report = appReports.find((r) => r.id === reportId);
     if (!report) return;
-    setSelectedWard(null);
     setSelectedReport(report);
     setSheetOpen(true);
     trackEvent('report_pin_tap', { report_id: reportId, category: report.category });
@@ -1086,23 +811,17 @@ const DashboardPage = () => {
 
   const handleClose = () => {
     setSheetOpen(false);
-    setTimeout(() => { setSelectedWard(null); setSelectedReport(null); }, 320);
+    setTimeout(() => setSelectedReport(null), 320);
   };
 
-  // Auto-open ward from ?ward= URL param once data is loaded
+  // Auto-open ward from ?ward= URL param (GBA ward key)
   useEffect(() => {
     if (urlWardHandled.current) return;
-    const wardCount = Object.keys(wardDataMap).length;
-    if (wardCount === 0) return;
     urlWardHandled.current = true;
-    const param = searchParams.get('ward');
-    if (!param) return;
-    const wardNum = parseInt(param, 10);
-    if (isNaN(wardNum)) return;
-    const wardData = wardDataMap[wardNum];
-    if (wardData) handleSearchSelect(wardNum, wardData, ZONE_LOOKUP[wardNum] ?? '');
+    const wardNum = parseInt(searchParams.get('ward') ?? '', 10);
+    if (WARD_PROPS[wardNum]) focusWard(wardNum);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wardDataMap]);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = sheetOpen ? 'hidden' : '';
@@ -1117,15 +836,9 @@ const DashboardPage = () => {
       (pos) => {
         setLocating(false);
         const { latitude: lat, longitude: lng } = pos.coords;
-        // Check within Bangalore bounding box
-        if (lat < 12.68 || lat > 13.20 || lng < 77.30 || lng > 77.90) {
-          alert('Your current location appears to be outside Bengaluru.');
-          return;
-        }
         const wardNum = findWardForPoint(lat, lng);
-        if (!wardNum) { alert('Could not match your location to a ward boundary.'); return; }
-        const wardData = wardDataMap[wardNum];
-        if (wardData) handleSearchSelect(wardNum, wardData, ZONE_LOOKUP[wardNum] ?? '');
+        if (!wardNum) { alert('Your current location appears to be outside the Greater Bengaluru Authority area.'); return; }
+        focusWard(wardNum);
       },
       (err) => {
         setLocating(false);
@@ -1140,7 +853,7 @@ const DashboardPage = () => {
   const shareDashboard = async () => {
     trackEvent('share_click', { target: 'dashboard' });
     const url  = `${window.location.origin}/dashboard`;
-    const text = `🗺️ See Bengaluru's ward-by-ward garbage problem map. Find your area and see what residents can do about it →`;
+    const text = `🗺️ See garbage reports and citizen stories across Bengaluru's 369 GBA wards. Find your ward and see what residents can do about it →`;
     if (navigator.share) {
       try {
         await navigator.share({ title: 'GEODHA · Bengaluru Garbage Crisis Map', text, url });
@@ -1156,63 +869,27 @@ const DashboardPage = () => {
     } catch { /* ignore */ }
   };
 
-  // ── Testimonial markers for the map ───────────────────────────────────────
-  const testimonialMarkers = useMemo<TestimonialMarkerInfo[]>(() => {
-    const byWard = new Map<number, TestimonialDoc[]>();
-    for (const t of testimonials) {
-      if (!byWard.has(t.ward_num)) byWard.set(t.ward_num, []);
-      byWard.get(t.ward_num)!.push(t);
-    }
-
-    const markers: TestimonialMarkerInfo[] = [];
-    for (const [wardNum, wt] of byWard) {
-      const centroid = WARD_CENTROIDS[wardNum];
-
-      // Handle negative and positive testimonials independently so both can
-      // appear in the same ward cluster simultaneously.
-      for (const isPositive of [false, true] as const) {
-        const group = wt.filter((t) => (t.is_positive ?? false) === isPositive);
-        if (group.length === 0) continue;
-
-        const exact = group.filter((t) => t.has_exact_location && t.exact_lat != null && t.exact_lng != null);
-        if (exact.length > 0) {
-          for (const t of exact) {
-            markers.push({ id: t.id, wardNum, latlng: [t.exact_lat!, t.exact_lng!], isExact: true, isCritical: t.critical_or_not ?? false, isPositive });
-          }
-        } else if (centroid) {
-          const isCritical = group.some((t) => t.critical_or_not);
-          markers.push({ id: `centre-${isPositive ? 'pos' : 'neg'}-${wardNum}`, wardNum, latlng: centroid, isExact: false, isCritical, isPositive });
-        }
-      }
-    }
-    return markers;
-  }, [testimonials]);
-
-  // ── Guards ────────────────────────────────────────────────────────────────
-  if (wardLoading || actLoading) return <LoadingScreen />;
-  if (wardError)                 return <ErrorScreen message={wardError} />;
-  if (actError)                  return <ErrorScreen message={actError} />;
-  if (!scales)                   return <LoadingScreen />;
-
   // ── Shared map block (used in both normal and fullscreen layouts) ──────────
   const mapBlock = (minH?: string) => (
     <div className={`relative ${!minH ? 'flex-1' : ''}`} style={minH ? { height: minH } : {}}>
       <div className="absolute inset-0">
         <MapErrorBoundary>
           <WardMap
-            wardDataMap={wardDataMap}
-            selectedWard={selectedWard?.num ?? null}
+            selectedWard={selectedWard}
             onWardSelect={handleWardSelect}
-            zoomToWard={zoomToWard}
-            testimonialMarkers={testimonialMarkers}
+            zoomRequest={zoomRequest}
             appReports={appReportPins}
             onReportSelect={handleReportSelect}
-            mode={viewMode}
           />
         </MapErrorBoundary>
       </div>
 
-      {/* Locate-me button — bottom-right corner */}
+      {/* Selected ward name — the way to see a ward's name on touch screens */}
+      {selectedWard != null && (
+        <SelectedWardLabel wardNum={selectedWard} onClose={() => setSelectedWard(null)} />
+      )}
+
+      {/* Locate-me button — top-right corner */}
       <button
         onClick={locateUser}
         disabled={locating}
@@ -1224,8 +901,6 @@ const DashboardPage = () => {
           ? <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
           : <LocateFixed className="h-4 w-4 text-gray-600" />}
       </button>
-
-      
     </div>
   );
 
@@ -1235,14 +910,11 @@ const DashboardPage = () => {
       {/* ── FULLSCREEN OVERLAY ─────────────────────────────────────────────── */}
       {fullscreen && (
         <div className="fixed inset-0 z-[9000] bg-white flex flex-col">
-          {/* Compact header: mode toggle + search + exit */}
+          {/* Compact header: search + exit */}
           <div className="px-3 py-2 bg-white border-b border-gray-100 flex items-center gap-2 shrink-0">
-            <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
-            {viewMode === 'stats' && (
-              <div className="flex-1 min-w-0">
-                <WardSearch wardDataMap={wardDataMap} onSelect={handleSearchSelect} />
-              </div>
-            )}
+            <div className="flex-1 min-w-0 -mt-2">
+              <WardSearch onSelect={focusWard} />
+            </div>
             <button
               onClick={() => setFullscreen(false)}
               title="Exit fullscreen"
@@ -1258,7 +930,7 @@ const DashboardPage = () => {
 
           {/* Legend strip */}
           <div className="px-4 py-2 border-t border-gray-100 bg-white shrink-0">
-            <MapLegend mode={viewMode} />
+            <MapLegend />
           </div>
         </div>
       )}
@@ -1274,9 +946,7 @@ const DashboardPage = () => {
                 Bengaluru · Garbage Crisis Map
               </h1>
               <p className="text-xs text-gray-500 mt-0.5">
-                {viewMode === 'reports'
-                  ? 'Live reports from the GEODHA app, plotted on the ward map'
-                  : 'May 2026 · Select any ward or area to view more details'}
+                Live GEODHA app reports across the {WARD_FEATURES.length} wards of the Greater Bengaluru Authority's 5 city corporations
               </p>
             </div>
             <div className="flex items-center gap-1 shrink-0 mt-0.5">
@@ -1303,37 +973,32 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          {/* View mode toggle */}
-          <div className="mt-3">
-            <ViewModeToggle mode={viewMode} onChange={handleViewModeChange} />
-          </div>
-
-          {viewMode === 'stats' && <WardSearch wardDataMap={wardDataMap} onSelect={handleSearchSelect} />}
+          <WardSearch onSelect={focusWard} />
         </div>
 
         {/* Legend — above map */}
         <div className="px-4 sm:px-6 py-2 border-y border-gray-100 bg-white">
-          <MapLegend mode={viewMode} />
+          <MapLegend />
         </div>
 
         {/* Map */}
-        {mapBlock('70vh')}
+        <div ref={mapAnchorRef} className="scroll-mt-16">
+          {mapBlock('70vh')}
+        </div>
 
-        {/* Tap hint + severity disclaimer */}
+        {/* Tap hint */}
         <div className="px-4 sm:px-6 border-t border-gray-50">
           {!sheetOpen && (
             <p className="py-2.5 text-center text-xs text-gray-400">
-              {viewMode === 'reports'
-                ? 'Tap a report pin to view its details'
-                : 'Tap any ward to explore issues and recommended actions'}
+              Tap a ward to see its name, or a report pin to view its details
             </p>
           )}
-          {viewMode === 'stats' && (
-            <p className="py-2 text-center text-[10px] text-gray-300 border-t border-gray-50 leading-relaxed">
-              Severity ratings are relative — assessed by percentile intensity across Bengaluru's wards and aggregated from multiple citizen report sources.
-            </p>
-          )}
+          <p className="py-2 text-center text-[10px] text-gray-300 border-t border-gray-50 leading-relaxed">
+            Ward boundaries: GBA final delimitation (369 wards, notified Nov 2025) via OpenCity. Testimonials without an exact location are assigned to the ward covering their reported area.
+          </p>
         </div>
+
+        <TestimonialsCarousel testimonials={testimonials} onShowWard={showWardFromTestimonial} />
 
       </div>{/* end normal layout */}
 
@@ -1360,18 +1025,7 @@ const DashboardPage = () => {
           >
             <div className="w-10 h-1 rounded-full bg-gray-300" />
           </div>
-          {selectedReport ? (
-            <ReportSheet report={selectedReport} onClose={handleClose} />
-          ) : selectedWard ? (
-            <WardSheet
-              data={selectedWard.data}
-              zone={selectedWard.zone}
-              scales={scales}
-              actions={actions}
-              allTestimonials={testimonials}
-              onClose={handleClose}
-            />
-          ) : null}
+          {selectedReport && <ReportSheet report={selectedReport} onClose={handleClose} />}
         </div>
       </div>
     </>

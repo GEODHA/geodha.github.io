@@ -42,7 +42,7 @@ export const kn: Dict = {
     contact: 'ಸಂಪರ್ಕಿಸಿ',
     androidApp: 'Android ಆ್ಯಪ್ — Google Play',
     iosApp: 'iOS ಆ್ಯಪ್ — App Store',
-    rights: '© 2026 GEODHA. ಎಲ್ಲ ಹಕ್ಕುಗಳು ಕಾಯ್ದಿರಿಸಲಾಗಿವೆ.',
+    rights: '2026 GEODHA — ಮುಕ್ತ, ಸ್ವಯಂಸೇವಕರಿಂದ ನಡೆಸಲ್ಪಡುವ ಸಮುದಾಯ ಉಪಕ್ರಮ.',
   },
   // Landing page (src/pages/Index.tsx) — full copy, section by section.
   landing: {
@@ -91,8 +91,8 @@ export const kn: Dict = {
     statCaseStudies: 'ದಾಖಲಿತ ಕೇಸ್ ಸ್ಟಡಿಗಳು',
 
     solutions2Kicker: 'ನಮ್ಮ ಪರಿಹಾರಗಳು · 02',
-    solutions2Title: 'ಇಡೀ ನಗರದ ಕಸ, ನಕ್ಷೆಯಲ್ಲಿ.',
-    solutions2Body: 'ಪ್ರತಿ ವಾರ್ಡ್‌ನ ಕಸದ ಸ್ಥಿತಿ — ಲೈವ್, ಮುಕ್ತ ಮತ್ತು ಸಾರ್ವಜನಿಕ. ವಿವರಗಳು ಮತ್ತು ಶಿಫಾರಸು ಮಾಡಿದ ಕ್ರಮಗಳಿಗಾಗಿ ಯಾವುದೇ ವಾರ್ಡ್ ಟ್ಯಾಪ್ ಮಾಡಿ.',
+    solutions2Title: 'ಬೆಂಗಳೂರಿನ ಕಸ, ನಕ್ಷೆಯಲ್ಲಿ.',
+    solutions2Body: 'GEODHA ಬಳಕೆದಾರರ ಪ್ರತಿಯೊಂದು ವರದಿ, ಬೆಂಗಳೂರಿನಾದ್ಯಂತ ಲೈವ್ ಆಗಿ ನಕ್ಷೆಯಲ್ಲಿ — ನಿಮ್ಮ ಹತ್ತಿರ ಏನು ದಾಖಲಾಗಿದೆ ಮತ್ತು ಏನು ಸರಿಯಾಗಿದೆ ಎಂದು ನೋಡಿ. ಮುಕ್ತ, ಸಾರ್ವಜನಿಕ, ಮತ್ತು ಪ್ರತಿ ವರದಿಯೊಂದಿಗೆ ಬೆಳೆಯುತ್ತಿದೆ.',
 
     blogTitle: 'ಬ್ಲಾಗ್',
     blogBody: 'ತ್ಯಾಜ್ಯ ನಿರ್ವಹಣೆ ಮತ್ತು ವೃತ್ತಾಕಾರ ಆರ್ಥಿಕತೆಯ ಕಲ್ಪನೆಗಳು.',

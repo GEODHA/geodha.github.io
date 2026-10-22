@@ -1,16 +1,28 @@
 // Shared ward-boundary geometry helpers.
 // Single source of truth for logic previously duplicated between
 // WardMap.tsx and DashboardPage.tsx.
+//
+// Boundaries are the GBA 369-ward delimitation (see src/config/gba.ts).
+// `ward_num` is a site-wide key (1–369, ordered by corporation then ward id);
+// `ward_id` is the official number within its corporation.
 
 import L from 'leaflet';
-import wardBoundaries from '../../data/ward-boundaries.json';
+import wardBoundaries from '../../data/gba-ward-boundaries.json';
+import legacyCentroids from '../../data/legacy-bbmp-ward-centroids.json';
+import { CORPORATIONS } from '@/config/gba';
+import type { CorporationId } from '@/config/gba';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface WardBoundaryProps {
-  ward_num:  number;
-  ward_name: string;
-  zone:      string;
+  ward_num:     number;
+  corp_id:      CorporationId;
+  corporation:  string;
+  ward_id:      number;
+  ward_name:    string;
+  ward_name_kn: string;
+  zone:         string;
+  population:   number | null;
 }
 
 export type WardBoundaryFeature = GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon, WardBoundaryProps>;
@@ -82,12 +94,30 @@ export function findWardForPoint(lat: number, lng: number): number | null {
 
 // ── Precomputed lookups ───────────────────────────────────────────────────────
 
-export const { ZONE_LOOKUP, WARD_CENTROIDS } = (() => {
-  const zones:     Record<number, string>           = {};
-  const centroids: Record<number, [number, number]> = {};
+export const { WARD_PROPS, WARD_CENTROIDS } = (() => {
+  const props:     Record<number, WardBoundaryProps> = {};
+  const centroids: Record<number, [number, number]>  = {};
   for (const f of WARD_FEATURES) {
-    zones[f.properties.ward_num]     = f.properties.zone ?? '';
+    props[f.properties.ward_num]     = f.properties;
     centroids[f.properties.ward_num] = ringCentroid(outerRing(f.geometry));
   }
-  return { ZONE_LOOKUP: zones, WARD_CENTROIDS: centroids };
+  return { WARD_PROPS: props, WARD_CENTROIDS: centroids };
 })();
+
+/** "Ward 25 · Bengaluru West City Corporation" style subtitle. */
+export function wardSubtitle(wardNum: number): string {
+  const p = WARD_PROPS[wardNum];
+  if (!p) return '';
+  return `Ward ${p.ward_id} · ${CORPORATIONS[p.corp_id].name}`;
+}
+
+// ── Legacy BBMP (198-ward) numbering ──────────────────────────────────────────
+// Testimonials written before the GBA switch carry a BBMP ward_num. We assign
+// them to the GBA ward containing the old ward's centroid.
+
+interface LegacyWard { name: string; centroid: [number, number]; gba_ward_num: number | null }
+const LEGACY = (legacyCentroids as unknown as { wards: Record<string, LegacyWard> }).wards;
+
+export function legacyToGbaWard(bbmpWardNum: number): number | null {
+  return LEGACY[bbmpWardNum]?.gba_ward_num ?? null;
+}
