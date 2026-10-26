@@ -27,7 +27,11 @@ const Navigation = () => {
   const currentCity =
     cities.find((c) => currentPath.toLowerCase().startsWith(c.prefix) && c.path !== '/dashboard') ?? cities[0];
 
-  const handleNavigation = (path: string) => {
+  // Ward dashboards (/dashboard/bscc-31, …) sit under Dashboard.
+  const isActive = (path: string) =>
+    currentPath === path || (path === '/dashboard' && currentPath.startsWith('/dashboard/'));
+
+  const handleNavigation =(path: string) => {
     setIsMobileMenuOpen(false);
     navigate(path);
     window.scrollTo(0, 0);
@@ -122,7 +126,7 @@ const Navigation = () => {
               onClick={() => handleNavigation(item.path)}
               className={cn(
                 'px-4 py-1.5 text-sm font-bold rounded-full transition-colors border-2',
-                currentPath === item.path
+                isActive(item.path)
                   ? 'border-ink bg-tint-green text-foreground'
                   : 'border-transparent text-foreground/70 hover:text-foreground hover:bg-muted'
               )}
@@ -163,7 +167,7 @@ const Navigation = () => {
                 onClick={() => handleNavigation(item.path)}
                 className={cn(
                   'text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors',
-                  currentPath === item.path
+                  isActive(item.path)
                     ? 'bg-tint-green border-2 border-ink'
                     : 'text-foreground/70 hover:text-foreground hover:bg-muted'
                 )}

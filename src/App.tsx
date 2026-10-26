@@ -19,6 +19,7 @@ import WasteGuide from "./pages/WasteGuide";
 import BWGGuidePage from "./pages/BWGGuidePage";
 import VolunteerPage from "./pages/VolunteerPage";
 import JalandharPage from "./pages/JalandharPage";
+import WardTruckMapPage from "./pages/WardTruckMapPage";
 
 // ── Admin (gitignored — lives in src/admin/, absent on fresh clones) ──────────
 // vite.config.ts contains a plugin that resolves these to a null-component stub
@@ -54,6 +55,7 @@ const ROUTE_TITLES: Record<string, string> = {
   '/guide2':      'BWG Disposal Guidelines — GEODHA',
   '/volunteer':   'Volunteer for Cleanups — GEODHA',
   '/jalandhar':   'Jalandhar Garbage Map — GEODHA',
+  '/dashboard/bscc-31': 'Kasavanahalli Wet Waste Pickup Map — GEODHA',
 };
 
 /** Sets the per-route title, then fires a GA4 page_view on every navigation. */
@@ -121,6 +123,7 @@ const App = () => {
                   <Routes>
                     <Route path="/"          element={<Index />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/dashboard/:slug" element={<WardTruckMapPage />} />
                     {/* /data removed — dashboard is the single data destination */}
                     <Route path="/data"      element={<Navigate to="/dashboard" replace />} />
                     <Route path="/report"    element={<ReportPage />} />

@@ -13,7 +13,7 @@ import {
   getDoc, getDocs,
   setDoc, addDoc, updateDoc, deleteDoc,
   serverTimestamp, deleteField,
-  Timestamp, query, orderBy, limit,
+  Timestamp, query, where, orderBy, limit,
 } from 'firebase/firestore';
 import {
   ref, uploadBytes, getDownloadURL, deleteObject,
@@ -48,6 +48,70 @@ export async function fetchPublicStats(): Promise<PublicStats | null> {
   } catch {
     return null;
   }
+}
+
+// ── Daily wet waste pickup maps ───────────────────────────────────────────────
+// geodha_public_truck_maps/{zone}_{wardNumber}_{dateKey} — world-readable,
+// published nightly at 22:00 IST by the app backend. Read-only from the site.
+
+const TRUCK_MAPS_COL = 'geodha_public_truck_maps';
+
+export interface TruckMapDay {
+  wardKey:     string;
+  wardName:    string;
+  /** Bengaluru calendar day, YYYY-MM-DD. */
+  dateKey:     string;
+  reports:     number;
+  residents:   number;
+  collected:   number;
+  missed:      number;
+  longMissed:  number;
+  streakDays:  number;
+  image: {
+    url:      string;
+    fileName: string;
+    width:    number;
+    height:   number;
+    bytes:    number;
+  };
+  generatedAt: Date | null;
+}
+
+/**
+ * The latest (up to 30) published days for a ward, newest first.
+ * Throws if Firestore can't be reached, so callers can show an error state.
+ * The query shape matches the backend's composite index — don't add filters.
+ */
+export async function fetchTruckMaps(wardKey: string): Promise<TruckMapDay[]> {
+  const snap = await getDocs(query(
+    collection(db, TRUCK_MAPS_COL),
+    where('wardKey', '==', wardKey),
+    orderBy('dateKey', 'desc'),
+    limit(30),
+  ));
+  return snap.docs.flatMap((d) => {
+    const v = d.data();
+    if (typeof v.dateKey !== 'string' || typeof v.image?.url !== 'string') return [];
+    return [{
+      wardKey:    v.wardKey,
+      wardName:   v.wardName ?? '',
+      dateKey:    v.dateKey,
+      reports:    v.reports ?? 0,
+      residents:  v.residents ?? 0,
+      collected:  v.collected ?? 0,
+      missed:     v.missed ?? 0,
+      longMissed: v.longMissed ?? 0,
+      streakDays: v.streakDays ?? 4,
+      image: {
+        url:      v.image.url,
+        fileName: v.image.fileName ?? '',
+        width:    v.image.width ?? 2160,
+        height:   v.image.height ?? 2000,
+        bytes:    v.image.bytes ?? 0,
+      },
+      generatedAt: v.generatedAt instanceof Timestamp ? v.generatedAt.toDate() : null,
+    }];
+  });
 }
 
 // ── Shared types ──────────────────────────────────────────────────────────────
