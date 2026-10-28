@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 
 import WardMap from '@/components/WardMap';
+import type { WardLayer } from '@/components/WardMap';
 import MapErrorBoundary from '@/components/MapErrorBoundary';
 import { APP_REPORT_STATUS_COLORS } from '@/components/AppReportsLayer';
 import type { AppReportPin, AppReportStatus } from '@/components/AppReportsLayer';
@@ -24,6 +25,10 @@ import {
   WARD_FEATURES, WARD_PROPS, findWardForPoint, legacyToGbaWard,
 } from '@/lib/geo';
 import { CORPORATIONS, CORPORATION_LIST } from '@/config/gba';
+import {
+  BBMP_WARD_COUNT, BBMP_ZONE_COLORS, bbmpZoneColor, findBbmpWardForPoint, loadBbmpWards,
+} from '@/lib/bbmp';
+import type { BbmpWardFeature } from '@/lib/bbmp';
 import { trackEvent } from '@/lib/analytics';
 
 // ── Firebase hooks ────────────────────────────────────────────────────────────
@@ -157,24 +162,59 @@ function ImageLightbox({ images, initialIndex, onClose }: {
 
 // ── Ward search ───────────────────────────────────────────────────────────────
 
-const SEARCHABLE_WARDS = WARD_FEATURES
-  .map((f) => f.properties)
+interface SearchableWard {
+  ward_num:     number;
+  ward_name:    string;
+  ward_name_kn: string;
+  /** Corporation key (GBA) or zone (BBMP) — also matched by an exact query. */
+  group:        string;
+  color:        string;
+  /** Short tag shown on the right, e.g. "East #12". */
+  tag:          string;
+}
+
+const GBA_SEARCHABLE: SearchableWard[] = WARD_FEATURES
+  .map(({ properties: w }) => ({
+    ward_num: w.ward_num, ward_name: w.ward_name, ward_name_kn: w.ward_name_kn,
+    group: CORPORATIONS[w.corp_id].key, color: CORPORATIONS[w.corp_id].color,
+    tag: `${CORPORATIONS[w.corp_id].key} #${w.ward_id}`,
+  }))
   .sort((a, b) => a.ward_name.localeCompare(b.ward_name));
 
-function WardSearch({ onSelect }: { onSelect: (wardNum: number) => void }) {
+const bbmpSearchable = (features: BbmpWardFeature[]): SearchableWard[] => features
+  .map(({ properties: w }) => ({
+    ward_num: w.ward_num, ward_name: w.ward_name, ward_name_kn: '',
+    group: w.zone, color: bbmpZoneColor(w.zone), tag: `${w.zone} #${w.ward_num}`,
+  }))
+  .sort((a, b) => a.ward_name.localeCompare(b.ward_name));
+
+function WardSearch({ layer, bbmpWards, onSelect }: {
+  layer:     WardLayer;
+  bbmpWards: BbmpWardFeature[] | null;
+  onSelect:  (wardNum: number) => void;
+}) {
   const [query,         setQuery]         = useState('');
   const [open,          setOpen]          = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const isBbmp = layer === 'bbmp';
+
+  const wards = useMemo(
+    () => (isBbmp ? (bbmpWards ? bbmpSearchable(bbmpWards) : []) : GBA_SEARCHABLE),
+    [isBbmp, bbmpWards],
+  );
+
+  // A name picked on one map means nothing on the other.
+  useEffect(() => { setQuery(''); }, [layer]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (q.length === 0) return SEARCHABLE_WARDS;
-    return SEARCHABLE_WARDS.filter((w) =>
+    if (q.length === 0) return wards;
+    return wards.filter((w) =>
       w.ward_name.toLowerCase().includes(q) ||
-      w.ward_name_kn.includes(query.trim()) ||
-      CORPORATIONS[w.corp_id].key.toLowerCase() === q);
-  }, [query]);
+      (w.ward_name_kn && w.ward_name_kn.includes(query.trim())) ||
+      w.group.toLowerCase() === q);
+  }, [query, wards]);
 
   const reposition = () => {
     if (!wrapperRef.current) return;
@@ -197,7 +237,7 @@ function WardSearch({ onSelect }: { onSelect: (wardNum: number) => void }) {
         <input
           type="text"
           value={query}
-          placeholder="Search GBA ward by name…"
+          placeholder={isBbmp ? 'Search BBMP ward by name…' : 'Search GBA ward by name…'}
           onChange={(e) => { setQuery(e.target.value); handleOpen(); }}
           onFocus={handleOpen}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
@@ -218,7 +258,9 @@ function WardSearch({ onSelect }: { onSelect: (wardNum: number) => void }) {
         >
           {filtered.length === 0 && (
             <p className="px-3 py-2.5 text-xs text-gray-500">
-              No GBA ward named “{query.trim()}”. Older areas may now be split across differently named wards — try a nearby name.
+              {isBbmp
+                ? <>No BBMP ward named “{query.trim()}”. Try a nearby name.</>
+                : <>No GBA ward named “{query.trim()}”. Older areas may now be split across differently named wards — try a nearby name, or switch to the BBMP map.</>}
             </p>
           )}
           {filtered.slice(0, 25).map((w) => (
@@ -228,9 +270,9 @@ function WardSearch({ onSelect }: { onSelect: (wardNum: number) => void }) {
               onMouseDown={() => choose(w.ward_num, w.ward_name)}
             >
               <span>{w.ward_name}</span>
-              <span className="text-[10px] ml-2 flex items-center gap-1 text-gray-400">
-                <span className="h-2 w-2 rounded-full" style={{ background: CORPORATIONS[w.corp_id].color }} />
-                {CORPORATIONS[w.corp_id].key} #{w.ward_id}
+              <span className="text-[10px] ml-2 flex items-center gap-1 text-gray-400 shrink-0">
+                <span className="h-2 w-2 rounded-full" style={{ background: w.color }} />
+                {w.tag}
               </span>
             </button>
           ))}
@@ -244,24 +286,40 @@ function WardSearch({ onSelect }: { onSelect: (wardNum: number) => void }) {
 // ── Selected-ward label (floats over the map) ─────────────────────────────────
 // Replaces hover tooltips on touch screens: tapping a ward shows its name here.
 
-function SelectedWardLabel({ wardNum, onClose }: { wardNum: number; onClose: () => void }) {
-  const ward = WARD_PROPS[wardNum];
-  if (!ward) return null;
-  const corp = CORPORATIONS[ward.corp_id];
+function SelectedWardLabel({ layer, bbmpWards, wardNum, onClose }: {
+  layer:     WardLayer;
+  bbmpWards: BbmpWardFeature[] | null;
+  wardNum:   number;
+  onClose:   () => void;
+}) {
+  let name: string, nameKn = '', sub: string, color: string;
+  if (layer === 'bbmp') {
+    const ward = bbmpWards?.find((f) => f.properties.ward_num === wardNum)?.properties;
+    if (!ward) return null;
+    name  = ward.ward_name;
+    sub   = `BBMP ward ${ward.ward_num} · ${ward.zone} zone`;
+    color = bbmpZoneColor(ward.zone);
+  } else {
+    const ward = WARD_PROPS[wardNum];
+    if (!ward) return null;
+    const corp = CORPORATIONS[ward.corp_id];
+    name   = ward.ward_name;
+    nameKn = ward.ward_name_kn;
+    sub    = `Ward ${ward.ward_id} · ${corp.name}`;
+    color  = corp.color;
+  }
   return (
     <div className="absolute bottom-7 left-1/2 -translate-x-1/2 z-[999] max-w-[calc(100%-1.5rem)]">
       <div
         className="flex items-center gap-2.5 bg-white/95 backdrop-blur border border-gray-200 rounded-xl shadow-lg pl-3 pr-1.5 py-2"
-        style={{ borderLeft: `4px solid ${corp.color}` }}
+        style={{ borderLeft: `4px solid ${color}` }}
       >
         <div className="min-w-0">
           <p className="text-sm font-bold text-gray-900 leading-tight truncate" style={{ fontFamily: "'Archivo', sans-serif" }}>
-            {ward.ward_name}
-            {ward.ward_name_kn && <span className="ml-1.5 text-xs font-medium text-gray-400">{ward.ward_name_kn}</span>}
+            {name}
+            {nameKn && <span className="ml-1.5 text-xs font-medium text-gray-400">{nameKn}</span>}
           </p>
-          <p className="text-[11px] text-gray-500 truncate">
-            Ward {ward.ward_id} · {corp.name}
-          </p>
+          <p className="text-[11px] text-gray-500 truncate">{sub}</p>
         </div>
         <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-700 shrink-0" aria-label="Clear selected ward">
           <X className="h-3.5 w-3.5" />
@@ -699,15 +757,50 @@ function ReportColorLegend({ suffix }: { suffix?: string }) {
   );
 }
 
+// ── GBA / BBMP map toggle ─────────────────────────────────────────────────────
+
+function WardLayerToggle({ layer, loading, onChange }: {
+  layer:    WardLayer;
+  loading:  boolean;
+  onChange: (layer: WardLayer) => void;
+}) {
+  const options: { key: WardLayer; label: string; count: number }[] = [
+    { key: 'gba',  label: 'GBA',  count: WARD_FEATURES.length },
+    { key: 'bbmp', label: 'BBMP', count: BBMP_WARD_COUNT },
+  ];
+  return (
+    <div role="radiogroup" aria-label="Ward map" className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-xs">
+      {options.map((o) => (
+        <button
+          key={o.key}
+          role="radio"
+          aria-checked={layer === o.key}
+          onClick={() => onChange(o.key)}
+          className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 font-semibold transition-colors ${
+            layer === o.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'
+          }`}
+        >
+          {o.label}
+          <span className="font-normal text-gray-400 tabular-nums">{o.count}</span>
+          {o.key === 'bbmp' && loading && <Loader2 className="h-3 w-3 animate-spin text-gray-400" />}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ── Map legend ────────────────────────────────────────────────────────────────
 
-function MapLegend() {
+function MapLegend({ layer }: { layer: WardLayer }) {
+  const items = layer === 'bbmp'
+    ? Object.entries(BBMP_ZONE_COLORS).map(([zone, color]) => ({ key: zone, label: zone, title: `${zone} zone`, color }))
+    : CORPORATION_LIST.map((c) => ({ key: String(c.id), label: c.key, title: c.name, color: c.color }));
   return (
     <div className="flex items-center gap-0.5 flex-wrap text-[10px] text-gray-500">
-      {CORPORATION_LIST.map((c) => (
-        <span key={c.id} className="flex items-center gap-1 mr-2" title={c.name}>
+      {items.map((c) => (
+        <span key={c.key} className="flex items-center gap-1 mr-2" title={c.title}>
           <span className="inline-block h-2.5 w-4 rounded-sm border-2" style={{ borderColor: c.color, background: `${c.color}55` }} />
-          {c.key}
+          {c.label}
         </span>
       ))}
       <ReportColorLegend />
@@ -730,17 +823,11 @@ function CityReportStats() {
   const city = stats?.city;
   const fmt = (n: number | undefined) => (n == null ? '—' : n.toLocaleString('en-IN'));
 
-  const tiles: { label: string; value: number | undefined; note: string; dot?: string }[] = [
-    {
-      label: 'Waste reports',
-      value: city?.totalReports,
-      note:  city?.totalOutsideGba
-        ? `Includes ${fmt(city.totalOutsideGba)} just outside GBA limits`
-        : 'Photo reports across Bengaluru',
-    },
-    { label: 'Sent to BBMP Sahaaya',          value: city?.sentToSahaaya,   note: 'Filed as official complaints' },
-    { label: 'Closed by officials',           value: city?.closedOnSahaaya, note: "Marked closed on Sahaaya — closed isn't always cleaned", dot: APP_REPORT_STATUS_COLORS.verified },
-    { label: 'Verified cleaned by residents', value: city?.resolvedByUsers, note: 'Marked resolved with a cleanup photo',                  dot: APP_REPORT_STATUS_COLORS.resolved },
+  const tiles: { label: string; value: number | undefined; tint: string; dot?: string }[] = [
+    { label: 'Waste reports',                      value: city?.totalReports,    tint: 'bg-white border-gray-200' },
+    { label: 'Official complaints on GBA Sahaaya', value: city?.sentToSahaaya,   tint: 'bg-blue-50 border-blue-200' },
+    { label: 'Closed by officials',                value: city?.closedOnSahaaya, tint: 'bg-amber-50 border-amber-200', dot: APP_REPORT_STATUS_COLORS.verified },
+    { label: 'Verified cleaned by residents',      value: city?.resolvedByUsers, tint: 'bg-green-50 border-green-200', dot: APP_REPORT_STATUS_COLORS.resolved },
   ];
 
   return (
@@ -748,13 +835,9 @@ function CityReportStats() {
       <h2 id="city-stats-heading" className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Archivo', sans-serif" }}>
         Waste reports across Bengaluru
       </h2>
-      <p className="text-xs text-gray-500">
-        Daily snapshot, updated at 10 PM IST
-        {stats?.updatedAt && <> · Last updated {stats.updatedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} IST</>}
-      </p>
       <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         {tiles.map((s) => (
-          <div key={s.label} className="rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm">
+          <div key={s.label} className={`rounded-xl border px-3 py-3 shadow-sm ${s.tint}`}>
             <p className="text-2xl sm:text-3xl font-bold text-gray-900 tabular-nums leading-none" style={{ fontFamily: "'Archivo', sans-serif" }}>
               {fmt(s.value)}
             </p>
@@ -762,10 +845,13 @@ function CityReportStats() {
               {s.dot && <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.dot }} />}
               {s.label}
             </p>
-            <p className="mt-0.5 text-[11px] text-gray-500 leading-snug">{s.note}</p>
           </div>
         ))}
       </div>
+      <p className="mt-2 text-[11px] text-gray-500">
+        Updated daily at 10 PM IST
+        {stats?.updatedAt && <> · Last updated {stats.updatedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} IST</>}
+      </p>
     </section>
   );
 }
@@ -817,6 +903,11 @@ const DashboardPage = () => {
   const [locating,     setLocating]     = useState(false);
   const [dashCopied,   setDashCopied]   = useState(false);
 
+  // ── Ward map: GBA 369 (default) or former BBMP 198 ────────────────────────
+  const [wardLayer,   setWardLayer]   = useState<WardLayer>('gba');
+  const [bbmpWards,   setBbmpWards]   = useState<BbmpWardFeature[] | null>(null);
+  const [bbmpLoading, setBbmpLoading] = useState(false);
+
   // ── Swipe-to-dismiss state ────────────────────────────────────────────────
   const [dragY,      setDragY]      = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -852,7 +943,22 @@ const DashboardPage = () => {
     setZoomRequest((z) => ({ wardNum, seq: (z?.seq ?? 0) + 1 }));
   };
 
+  const changeWardLayer = (next: WardLayer) => {
+    if (next === wardLayer) return;
+    trackEvent('ward_layer', { layer: next });
+    setSelectedWard(null);
+    setZoomRequest(null);
+    if (next === 'gba' || bbmpWards) { setWardLayer(next); return; }
+    setBbmpLoading(true);
+    loadBbmpWards()
+      .then((features) => { setBbmpWards(features); setWardLayer('bbmp'); })
+      .catch((err) => { console.error('BBMP wards failed to load:', err); alert('Could not load the BBMP ward map. Please try again.'); })
+      .finally(() => setBbmpLoading(false));
+  };
+
+  // Testimonials are placed on GBA wards.
   const showWardFromTestimonial = (wardNum: number) => {
+    if (wardLayer !== 'gba') setWardLayer('gba');
     focusWard(wardNum);
     if (!fullscreen) mapAnchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -892,8 +998,15 @@ const DashboardPage = () => {
       (pos) => {
         setLocating(false);
         const { latitude: lat, longitude: lng } = pos.coords;
-        const wardNum = findWardForPoint(lat, lng);
-        if (!wardNum) { alert('Your current location appears to be outside the Greater Bengaluru Authority area.'); return; }
+        const wardNum = wardLayer === 'bbmp' && bbmpWards
+          ? findBbmpWardForPoint(bbmpWards, lat, lng)
+          : findWardForPoint(lat, lng);
+        if (!wardNum) {
+          alert(wardLayer === 'bbmp'
+            ? 'Your current location appears to be outside the former BBMP area.'
+            : 'Your current location appears to be outside the Greater Bengaluru Authority area.');
+          return;
+        }
         focusWard(wardNum);
       },
       (err) => {
@@ -931,6 +1044,8 @@ const DashboardPage = () => {
       <div className="absolute inset-0">
         <MapErrorBoundary>
           <WardMap
+            layer={wardLayer}
+            bbmpWards={bbmpWards}
             selectedWard={selectedWard}
             onWardSelect={handleWardSelect}
             zoomRequest={zoomRequest}
@@ -942,7 +1057,7 @@ const DashboardPage = () => {
 
       {/* Selected ward name — the way to see a ward's name on touch screens */}
       {selectedWard != null && (
-        <SelectedWardLabel wardNum={selectedWard} onClose={() => setSelectedWard(null)} />
+        <SelectedWardLabel layer={wardLayer} bbmpWards={bbmpWards} wardNum={selectedWard} onClose={() => setSelectedWard(null)} />
       )}
 
       {/* Locate-me button — top-right corner */}
@@ -969,8 +1084,9 @@ const DashboardPage = () => {
           {/* Compact header: search + exit */}
           <div className="px-3 py-2 bg-white border-b border-gray-100 flex items-center gap-2 shrink-0">
             <div className="flex-1 min-w-0 -mt-2">
-              <WardSearch onSelect={focusWard} />
+              <WardSearch layer={wardLayer} bbmpWards={bbmpWards} onSelect={focusWard} />
             </div>
+            <WardLayerToggle layer={wardLayer} loading={bbmpLoading} onChange={changeWardLayer} />
             <button
               onClick={() => setFullscreen(false)}
               title="Exit fullscreen"
@@ -986,7 +1102,7 @@ const DashboardPage = () => {
 
           {/* Legend strip */}
           <div className="px-4 py-2 border-t border-gray-100 bg-white shrink-0">
-            <MapLegend />
+            <MapLegend layer={wardLayer} />
           </div>
         </div>
       )}
@@ -1029,12 +1145,17 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <WardSearch onSelect={focusWard} />
+          <div className="flex items-end gap-2">
+            <div className="flex-1 min-w-0">
+              <WardSearch layer={wardLayer} bbmpWards={bbmpWards} onSelect={focusWard} />
+            </div>
+            <WardLayerToggle layer={wardLayer} loading={bbmpLoading} onChange={changeWardLayer} />
+          </div>
         </div>
 
         {/* Legend — above map */}
         <div className="px-4 sm:px-6 py-2 border-y border-gray-100 bg-white">
-          <MapLegend />
+          <MapLegend layer={wardLayer} />
         </div>
 
         {/* Map */}
@@ -1050,7 +1171,10 @@ const DashboardPage = () => {
             </p>
           )}
           <p className="py-2 text-center text-[10px] text-gray-300 border-t border-gray-50 leading-relaxed">
-            Ward boundaries: GBA final delimitation (369 wards, notified Nov 2025) via OpenCity. Testimonials without an exact location are assigned to the ward covering their reported area.
+            {wardLayer === 'bbmp'
+              ? 'Ward boundaries: former BBMP 198 wards, shown for reference. Today\'s wards are the GBA 369.'
+              : 'Ward boundaries: GBA final delimitation (369 wards, notified Nov 2025) via OpenCity.'}
+            {' '}Testimonials without an exact location are assigned to the GBA ward covering their reported area.
           </p>
         </div>
 
