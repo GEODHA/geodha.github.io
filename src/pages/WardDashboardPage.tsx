@@ -20,11 +20,10 @@ import { AlertCircle, ArrowLeft, Download, Loader2, Maximize2, RotateCw, X, Zoom
 
 import NotFound from './NotFound';
 import StoreButtons from '@/components/StoreButtons';
-import MapTouchGuard from '@/components/MapTouchGuard';
 import MapErrorBoundary from '@/components/MapErrorBoundary';
 import TruckPinsMap, { TRUCK_PIN_COLORS } from '@/components/TruckPinsMap';
 import CityReportsMap from '@/components/CityReportsMap';
-import AutoScrollRow from '@/components/AutoScrollRow';
+import MapFitLimit from '@/components/MapFitLimit';
 import { ReportDialog } from '@/components/ReportCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchTruckMaps, fetchTruckMapPins, fetchReportStats } from '@/services/geodhaService';
@@ -262,16 +261,14 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
             <Skeleton className="mt-4 h-[65vh] min-h-[340px] max-h-[640px] w-full rounded-2xl" />
           ) : livePins ? (
             <>
-              <MapTouchGuard
-                exploreLabel={t.truckMap.mapExplore}
-                doneLabel={t.truckMap.mapDone}
-                className="mt-4 h-[65vh] min-h-[340px] max-h-[640px] rounded-2xl border-[3px] border-ink overflow-hidden isolate"
+              <div
+                className="relative mt-4 h-[65vh] min-h-[340px] max-h-[640px] rounded-2xl border-[3px] border-ink overflow-hidden isolate"
                 style={{ boxShadow: 'var(--shadow-offset-4)' }}
               >
                 <MapErrorBoundary>
                   <TruckPinsMap data={livePins} labels={pinLabels} />
                 </MapErrorBoundary>
-              </MapTouchGuard>
+              </div>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-medium text-foreground/70">
                 <span className="inline-flex items-center gap-1.5"><LegendDot color={TRUCK_PIN_COLORS.collected} />{t.truckMap.legendCollected}</span>
                 <span className="inline-flex items-center gap-1.5"><LegendDot color={TRUCK_PIN_COLORS.missed} />{t.truckMap.legendMissed}</span>
@@ -472,8 +469,6 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
 
   return (
     <>
-      <p className="text-base sm:text-lg text-foreground/75 mb-5">{t.truckMap.bsSubtitle(wardName)}</p>
-
       {/* ── Waste report numbers (daily snapshot) ────────────────────── */}
       <p className="mono-label mb-2">{t.truckMap.bsStatsScope(wardName)}</p>
       {!statsLoading && !wardStats ? (
@@ -483,10 +478,10 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
-            <CountTile value={stat(wardStats?.totalReports)}    label={t.truckMap.rsTotal}    note={t.truckMap.rsTotalNote}    tint="bg-paper" />
-            <CountTile value={stat(wardStats?.sentToSahaaya)}   label={t.truckMap.rsSent}     note={t.truckMap.rsSentNote}     tint="bg-tint-blue" />
-            <CountTile value={stat(wardStats?.closedOnSahaaya)} label={t.truckMap.rsClosed}   note={t.truckMap.rsClosedNote}   tint="bg-tint-yellow" dot={STATUS_COLORS.closed} />
-            <CountTile value={stat(wardStats?.resolvedByUsers)} label={t.truckMap.rsResolved} note={t.truckMap.rsResolvedNote} tint="bg-tint-green"  dot={STATUS_COLORS.resolved} />
+            <CountTile value={stat(wardStats?.totalReports)}    label={t.truckMap.rsTotal}    tint="bg-paper" />
+            <CountTile value={stat(wardStats?.sentToSahaaya)}   label={t.truckMap.rsSent}     tint="bg-tint-blue" />
+            <CountTile value={stat(wardStats?.closedOnSahaaya)} label={t.truckMap.rsClosed}   tint="bg-tint-yellow" dot={STATUS_COLORS.closed} />
+            <CountTile value={stat(wardStats?.resolvedByUsers)} label={t.truckMap.rsResolved} tint="bg-tint-green"  dot={STATUS_COLORS.resolved} />
           </div>
           {reportStats?.updatedAt && (
             <p className="mt-2 text-xs text-foreground/60">
@@ -498,10 +493,8 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
 
       {/* ── Map ──────────────────────────────────────────────────────── */}
       <div ref={mapRef}>
-        <MapTouchGuard
-          exploreLabel={t.truckMap.mapExplore}
-          doneLabel={t.truckMap.mapDone}
-          className="mt-4 h-[65vh] min-h-[340px] max-h-[640px] rounded-2xl border-[3px] border-ink overflow-hidden isolate"
+        <div
+          className="relative mt-4 h-[65vh] min-h-[340px] max-h-[640px] rounded-2xl border-[3px] border-ink overflow-hidden isolate"
           style={{ boxShadow: 'var(--shadow-offset-4)' }}
         >
           <MapErrorBoundary>
@@ -524,6 +517,7 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
                 interactive={false}
                 style={{ color: TRUCK_PIN_COLORS.boundary, weight: 3, dashArray: '6 6', fillColor: TRUCK_PIN_COLORS.boundary, fillOpacity: 0.05 }}
               />
+              <MapFitLimit bounds={viewBounds} maxBounds={area} />
             </CityReportsMap>
           </MapErrorBoundary>
           {(isLoading || isError) && (
@@ -535,7 +529,7 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
               </p>
             </div>
           )}
-        </MapTouchGuard>
+        </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-xs font-medium text-foreground/70">
         <span className="inline-flex items-center gap-1.5"><LegendDot color={STATUS_COLORS.pending} />{t.truckMap.bsPending}</span>
@@ -544,24 +538,22 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
         <span className="inline-flex items-center gap-1.5"><LegendLine color={TRUCK_PIN_COLORS.boundary} dashed />{t.truckMap.legendBoundary}</span>
         <span className="inline-flex items-center gap-1.5"><LegendLine color="#374151" />{t.truckMap.legendNeighbours}</span>
       </div>
-      <p className="mt-1.5 text-xs text-foreground/60">{t.truckMap.bsMapNote} {t.truckMap.bsMapLive}</p>
+      <p className="mt-1.5 text-xs text-foreground/60">{t.truckMap.bsMapLive}</p>
 
       {/* ── Large spots carousel ─────────────────────────────────────── */}
       <div className="mt-10">
-        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={ARCHIVO}>{t.truckMap.bsLargeTitle}</h2>
-        <p className="text-sm sm:text-base text-foreground/70 mt-1 mb-4">{t.truckMap.bsLargeBody(wardName)}</p>
+        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-4" style={ARCHIVO}>{t.truckMap.bsLargeTitle}</h2>
         {largeReports.length === 0 ? (
           <div className="rounded-2xl border-[3px] border-dashed border-ink/40 bg-muted px-6 py-10 text-center">
             {isLoading ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : <p className="mono-label">{t.truckMap.bsLargeEmpty}</p>}
           </div>
         ) : (
-          <AutoScrollRow
-            items={largeReports}
-            getKey={(r) => r.id!}
-            renderItem={(r) => (
+          <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-3 -mx-4 px-4 [scrollbar-width:thin]">
+            {largeReports.map((r) => (
               <button
+                key={r.id}
                 onClick={() => openReport(r, 'carousel_large')}
-                className="group block w-60 sm:w-72 text-left rounded-2xl border-[3px] border-ink overflow-hidden bg-paper"
+                className="group block shrink-0 snap-start w-60 sm:w-72 text-left rounded-2xl border-[3px] border-ink overflow-hidden bg-paper"
                 style={{ boxShadow: 'var(--shadow-offset-3)' }}
               >
                 <div className="relative">
@@ -578,8 +570,8 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
                   <p className="text-xs text-foreground/60 truncate">{r.location?.address || fmtDate(r.createdAt)}</p>
                 </div>
               </button>
-            )}
-          />
+            ))}
+          </div>
         )}
       </div>
 
@@ -590,7 +582,7 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
 
 // ── Small pieces ─────────────────────────────────────────────────────────────
 
-function CountTile({ value, label, note, tint, dot }: { value: string; label: string; note?: string; tint: string; dot?: string }) {
+function CountTile({ value, label, tint, dot }: { value: string; label: string; tint: string; dot?: string }) {
   return (
     <div className={cn('rounded-2xl border-[3px] border-ink p-3 sm:p-5', tint)} style={{ boxShadow: 'var(--shadow-offset-3)' }}>
       <p className="text-3xl sm:text-5xl font-extrabold tabular-nums leading-none" style={ARCHIVO}>{value}</p>
@@ -598,7 +590,6 @@ function CountTile({ value, label, note, tint, dot }: { value: string; label: st
         {dot && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: dot }} />}
         {label}
       </p>
-      {note && <p className="mt-1 text-[10px] sm:text-xs leading-tight text-foreground/60">{note}</p>}
     </div>
   );
 }

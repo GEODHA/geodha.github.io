@@ -7,10 +7,11 @@
 // Coincident dots are fanned out by a fixed pixel offset around their shared
 // position, so each stays visible and tappable at every zoom level.
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Polygon, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import MapFitLimit from './MapFitLimit';
 import type { TruckMapPins } from '@/services/geodhaService';
 import { OSM_TILE_URL, OSM_ATTRIBUTION, OSM_MAX_ZOOM } from '@/config/mapConfig';
 
@@ -80,7 +81,10 @@ function PinsLayer({ data, labels }: { data: TruckMapPins; labels: TruckPinsMapL
           missed ? labels.missed : labels.collected,
           missed && p.missedDays >= 2 ? labels.daysInARow(p.missedDays) : '',
         ].filter(Boolean);
-        marker.bindPopup(`<div style="font-size:13px;line-height:1.4">${lines.join('<br/>')}</div>`, { closeButton: false });
+        marker.bindPopup(
+          `<div style="font-size:13px;line-height:1.4;overflow-wrap:anywhere">${lines.join('<br/>')}</div>`,
+          { closeButton: false, minWidth: 160, maxWidth: popupMaxWidth(), autoPanPadding: L.point(12, 12) },
+        );
         layer.addLayer(marker);
       });
     }
@@ -92,57 +96,41 @@ function PinsLayer({ data, labels }: { data: TruckMapPins; labels: TruckPinsMapL
   return null;
 }
 
-/** Fits the ward outline, re-fitting until the visitor moves the map if the container resizes (e.g. as layout settles). */
-function FitBoundary({ boundary }: { boundary: [number, number][] }) {
-  const map = useMap();
-  useEffect(() => {
-    if (boundary.length <= 2) return;
-    const bounds = L.latLngBounds(boundary);
-    const el = map.getContainer();
-    let touched = false;
-    const markTouched = () => { touched = true; };
-    const fit = () => {
-      map.invalidateSize();
-      if (!touched) map.fitBounds(bounds, { padding: [12, 12], animate: false });
-    };
-    fit();
-    el.addEventListener('pointerdown', markTouched);
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    return () => {
-      ro.disconnect();
-      el.removeEventListener('pointerdown', markTouched);
-    };
-  }, [map, boundary]);
-  return null;
-}
+/** Popup width that fits a phone screen, so long street names wrap instead of overflowing. */
+const popupMaxWidth = () => Math.min(280, (typeof window !== 'undefined' ? window.innerWidth : 320) - 64);
 
-const TruckPinsMap = ({ data, labels }: { data: TruckMapPins; labels: TruckPinsMapLabels }) => (
-  <MapContainer
-    bounds={data.boundary.length > 2 ? L.latLngBounds(data.boundary) : undefined}
-    center={data.boundary.length > 2 ? undefined : [data.pins[0]?.lat ?? 12.9, data.pins[0]?.lng ?? 77.67]}
-    zoom={15}
-    minZoom={11}
-    maxZoom={19}
-    // Quarter steps so the long, narrow ward fills a phone-width map.
-    zoomSnap={0.25}
-    scrollWheelZoom={false}
-    style={{ height: '100%', width: '100%', background: '#f4f4f2' }}
-  >
-    <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILE_URL} maxZoom={OSM_MAX_ZOOM} />
-    {data.boundary.length > 2 && (
-      <Polygon
-        positions={data.boundary}
-        interactive={false}
-        pathOptions={{
-          color: TRUCK_PIN_COLORS.boundary, weight: 2.5, dashArray: '6 6',
-          fillColor: TRUCK_PIN_COLORS.boundary, fillOpacity: 0.04,
-        }}
-      />
-    )}
-    <FitBoundary boundary={data.boundary} />
-    <PinsLayer data={data} labels={labels} />
-  </MapContainer>
-);
+const TruckPinsMap = ({ data, labels }: { data: TruckMapPins; labels: TruckPinsMapLabels }) => {
+  const hasBoundary = data.boundary.length > 2;
+  const bounds = useMemo(() => (hasBoundary ? L.latLngBounds(data.boundary) : null), [data.boundary, hasBoundary]);
+  const maxBounds = useMemo(() => bounds?.pad(0.5), [bounds]);
+
+  return (
+    <MapContainer
+      bounds={bounds ?? undefined}
+      center={bounds ? undefined : [data.pins[0]?.lat ?? 12.9, data.pins[0]?.lng ?? 77.67]}
+      zoom={15}
+      minZoom={11}
+      maxZoom={19}
+      // Quarter steps so the long, narrow ward fills a phone-width map.
+      zoomSnap={0.25}
+      scrollWheelZoom={false}
+      style={{ height: '100%', width: '100%', background: '#f4f4f2' }}
+    >
+      <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILE_URL} maxZoom={OSM_MAX_ZOOM} />
+      {hasBoundary && (
+        <Polygon
+          positions={data.boundary}
+          interactive={false}
+          pathOptions={{
+            color: TRUCK_PIN_COLORS.boundary, weight: 2.5, dashArray: '6 6',
+            fillColor: TRUCK_PIN_COLORS.boundary, fillOpacity: 0.04,
+          }}
+        />
+      )}
+      {bounds && <MapFitLimit bounds={bounds} maxBounds={maxBounds} />}
+      <PinsLayer data={data} labels={labels} />
+    </MapContainer>
+  );
+};
 
 export default TruckPinsMap;
