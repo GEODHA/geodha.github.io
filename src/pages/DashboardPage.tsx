@@ -30,7 +30,8 @@ import { trackEvent } from '@/lib/analytics';
 import { useTestimonialsDB } from '@/hooks/useTestimonialsDB';
 
 // ── Shared types ──────────────────────────────────────────────────────────────
-import type { TestimonialDoc } from '@/services/geodhaService';
+import type { TestimonialDoc, ReportStats } from '@/services/geodhaService';
+import { fetchReportStats } from '@/services/geodhaService';
 
 // ── Date formatter — "2026-04-15" → "April 2026" ─────────────────────────────
 
@@ -714,6 +715,61 @@ function MapLegend() {
   );
 }
 
+// ── City-wide waste report stats (daily snapshot, 22:00 IST) ─────────────────
+
+function CityReportStats() {
+  // undefined = loading, null = unavailable (card hidden)
+  const [stats, setStats] = useState<ReportStats | null | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    fetchReportStats().then((s) => { if (!cancelled) setStats(s); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (stats === null) return null;
+  const city = stats?.city;
+  const fmt = (n: number | undefined) => (n == null ? '—' : n.toLocaleString('en-IN'));
+
+  const tiles: { label: string; value: number | undefined; note: string; dot?: string }[] = [
+    {
+      label: 'Waste reports',
+      value: city?.totalReports,
+      note:  city?.totalOutsideGba
+        ? `Includes ${fmt(city.totalOutsideGba)} just outside GBA limits`
+        : 'Photo reports across Bengaluru',
+    },
+    { label: 'Sent to BBMP Sahaaya',          value: city?.sentToSahaaya,   note: 'Filed as official complaints' },
+    { label: 'Closed by officials',           value: city?.closedOnSahaaya, note: "Marked closed on Sahaaya — closed isn't always cleaned", dot: APP_REPORT_STATUS_COLORS.verified },
+    { label: 'Verified cleaned by residents', value: city?.resolvedByUsers, note: 'Marked resolved with a cleanup photo',                  dot: APP_REPORT_STATUS_COLORS.resolved },
+  ];
+
+  return (
+    <section className="px-4 sm:px-6 pt-5 pb-6 border-t border-gray-100" aria-labelledby="city-stats-heading">
+      <h2 id="city-stats-heading" className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Archivo', sans-serif" }}>
+        Waste reports across Bengaluru
+      </h2>
+      <p className="text-xs text-gray-500">
+        Daily snapshot, updated at 10 PM IST
+        {stats?.updatedAt && <> · Last updated {stats.updatedAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} IST</>}
+      </p>
+      <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        {tiles.map((s) => (
+          <div key={s.label} className="rounded-xl border border-gray-200 bg-white px-3 py-3 shadow-sm">
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 tabular-nums leading-none" style={{ fontFamily: "'Archivo', sans-serif" }}>
+              {fmt(s.value)}
+            </p>
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-gray-800 leading-tight">
+              {s.dot && <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.dot }} />}
+              {s.label}
+            </p>
+            <p className="mt-0.5 text-[11px] text-gray-500 leading-snug">{s.note}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 const DashboardPage = () => {
@@ -997,6 +1053,8 @@ const DashboardPage = () => {
             Ward boundaries: GBA final delimitation (369 wards, notified Nov 2025) via OpenCity. Testimonials without an exact location are assigned to the ward covering their reported area.
           </p>
         </div>
+
+        <CityReportStats />
 
         <TestimonialsCarousel testimonials={testimonials} onShowWard={showWardFromTestimonial} />
 

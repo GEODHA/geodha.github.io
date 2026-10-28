@@ -24,8 +24,8 @@ GEODHA is a civic accountability platform piloting in Bengaluru, India. The webs
 | Route | Description |
 |---|---|
 | `/` | Homepage — hero, problem empathy section, services |
-| `/dashboard` | Ward map — 369 GBA wards tinted by city corporation with live app reports; citizen testimonials carousel below |
-| `/dashboard/bscc-31` | Kasavanahalli (Bengaluru South, ward 31) daily wet waste pickup map — reads `geodha_public_truck_maps`, day picker (`?day=YYYY-MM-DD`), download, full-screen zoom. Add wards in `src/config/wardDashboards.ts`. |
+| `/dashboard` | Ward map — 369 GBA wards tinted by city corporation with live app reports; citizen testimonials carousel below; city-wide waste report numbers below the map (daily 10 PM IST snapshot, `geodha_public_stats/reports`) |
+| `/dashboard/bscc-31` | Kasavanahalli (Bengaluru South, ward 31) ward dashboard, reached by direct URL only. **Wet waste pickup** tab: daily 10 PM IST snapshot from `geodha_public_truck_maps` (counts + PNG) and `geodha_public_truck_map_pins` (newest day as an interactive map; earlier days as PNG; `?day=YYYY-MM-DD`). **Blackspots** tab (`?tab=blackspots`): ward waste report numbers from `geodha_public_stats/reports` (daily snapshot), app reports in and around the ward on a map, large-spot carousel. Add wards in `src/config/wardDashboards.ts`. |
 | `/data` | Data & analysis — open burning × vulnerable communities |
 | `/report` | Report a Problem — mobile-optimised form |
 | `/blog` | Blog (Notion embed) |

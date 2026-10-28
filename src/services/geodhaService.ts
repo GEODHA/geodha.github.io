@@ -50,11 +50,64 @@ export async function fetchPublicStats(): Promise<PublicStats | null> {
   }
 }
 
+/** Waste report counts for a region (city or ward). */
+export interface ReportCounts {
+  /** Reports in the region (city: an approximate box, so includes areas just outside GBA). */
+  totalReports:    number;
+  /** Filed as official complaints, incl. reports later deleted by their author. */
+  sentToSahaaya:   number;
+  /** Marked closed on Sahaaya — closed doesn't always mean cleaned. */
+  closedOnSahaaya: number;
+  /** Marked resolved with a cleanup photo. */
+  resolvedByUsers: number;
+}
+
+export interface ReportStats {
+  city:      ReportCounts & { totalInsideGba: number; totalOutsideGba: number };
+  /** Keyed by backend ward key, e.g. "South_31". */
+  wards:     Record<string, ReportCounts>;
+  updatedAt: Date | null;
+}
+
+const toCounts = (v: Record<string, unknown> | undefined): ReportCounts | null => {
+  if (!v) return null;
+  const { totalReports, sentToSahaaya, closedOnSahaaya, resolvedByUsers } = v;
+  if ([totalReports, sentToSahaaya, closedOnSahaaya, resolvedByUsers].some((n) => typeof n !== 'number')) return null;
+  return { totalReports, sentToSahaaya, closedOnSahaaya, resolvedByUsers } as ReportCounts;
+};
+
+/**
+ * Reads the waste report statistics (geodha_public_stats/reports), a daily
+ * snapshot recomputed at 22:00 IST. Returns null if missing, malformed or
+ * unreadable.
+ */
+export async function fetchReportStats(): Promise<ReportStats | null> {
+  try {
+    const v = (await getDoc(doc(db, PUBLIC_STATS_COL, 'reports'))).data();
+    const city = toCounts(v?.city);
+    if (!v || !city) return null;
+    const wards: Record<string, ReportCounts> = {};
+    for (const [key, w] of Object.entries((v.wards ?? {}) as Record<string, Record<string, unknown>>)) {
+      const c = toCounts(w);
+      if (c) wards[key] = c;
+    }
+    return {
+      city: { ...city, totalInsideGba: v.city.totalInsideGba ?? city.totalReports, totalOutsideGba: v.city.totalOutsideGba ?? 0 },
+      wards,
+      updatedAt: v.updatedAt instanceof Timestamp ? v.updatedAt.toDate() : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 // ── Daily wet waste pickup maps ───────────────────────────────────────────────
 // geodha_public_truck_maps/{zone}_{wardNumber}_{dateKey} — world-readable,
-// published nightly at 22:00 IST by the app backend. Read-only from the site.
+// published nightly at 22:00 IST by the app backend, plus the newest day's
+// pins in geodha_public_truck_map_pins/{wardKey}. Read-only from the site.
 
-const TRUCK_MAPS_COL = 'geodha_public_truck_maps';
+const TRUCK_MAPS_COL     = 'geodha_public_truck_maps';
+const TRUCK_MAP_PINS_COL = 'geodha_public_truck_map_pins';
 
 export interface TruckMapDay {
   wardKey:     string;
@@ -112,6 +165,54 @@ export async function fetchTruckMaps(wardKey: string): Promise<TruckMapDay[]> {
       generatedAt: v.generatedAt instanceof Timestamp ? v.generatedAt.toDate() : null,
     }];
   });
+}
+
+export interface TruckMapPin {
+  lat:        number;
+  lng:        number;
+  status:     'collected' | 'missed';
+  /** Street / landmark caption; may be empty. */
+  label:      string;
+  /** Consecutive missed days ending on dateKey (0 when collected). */
+  missedDays: number;
+}
+
+export interface TruckMapPins {
+  dateKey:    string;
+  streakDays: number;
+  boundary:   [number, number][];
+  pins:       TruckMapPin[];
+}
+
+/**
+ * Pins for the newest published day (geodha_public_truck_map_pins/{wardKey},
+ * replaced by each nightly run). Returns null if missing, malformed or
+ * unreadable — callers fall back to that day's PNG.
+ */
+export async function fetchTruckMapPins(wardKey: string): Promise<TruckMapPins | null> {
+  try {
+    const snap = await getDoc(doc(db, TRUCK_MAP_PINS_COL, wardKey));
+    const v = snap.data();
+    if (!v || typeof v.dateKey !== 'string' || !Array.isArray(v.pins) || !Array.isArray(v.boundary)) return null;
+    return {
+      dateKey:    v.dateKey,
+      streakDays: v.streakDays ?? 4,
+      boundary:   v.boundary
+        .filter((p: { lat?: unknown; lng?: unknown }) => typeof p?.lat === 'number' && typeof p?.lng === 'number')
+        .map((p: { lat: number; lng: number }) => [p.lat, p.lng] as [number, number]),
+      pins: v.pins
+        .filter((p: { lat?: unknown; lng?: unknown }) => typeof p?.lat === 'number' && typeof p?.lng === 'number')
+        .map((p: Record<string, unknown>) => ({
+          lat:        p.lat as number,
+          lng:        p.lng as number,
+          status:     p.status === 'collected' ? 'collected' : 'missed',
+          label:      typeof p.label === 'string' ? p.label : '',
+          missedDays: typeof p.missedDays === 'number' ? p.missedDays : 0,
+        })),
+    };
+  } catch {
+    return null;
+  }
 }
 
 // ── Shared types ──────────────────────────────────────────────────────────────

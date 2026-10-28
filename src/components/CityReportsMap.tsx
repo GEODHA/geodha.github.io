@@ -1,6 +1,8 @@
 // Live GEODHA report map for a city data page (e.g. /jalandhar).
 // Clustered pins colored by status and sized by issue size; tapping a pin
 // calls onReportSelect. `focus` flies the map to a report ("View on map").
+// `bounds` (optional) fits the initial view instead of center/zoom; `children`
+// adds extra layers (e.g. ward outlines on a ward dashboard).
 
 import { useEffect } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
@@ -90,17 +92,23 @@ function FocusController({ focus }: { focus: { latlng: [number, number]; key: nu
 }
 
 interface Props {
-  center:  [number, number];
+  center?: [number, number];
+  bounds?: L.LatLngBoundsExpression;
   zoom?:   number;
   reports: Report[];
   focus?:  { latlng: [number, number]; key: number } | null;
   highlightId?: string | null;
   onReportSelect: (id: string) => void;
+  children?: React.ReactNode;
+  /** Zoom granularity; fractional values let `bounds` fit more tightly. */
+  zoomSnap?: number;
 }
 
-const CityReportsMap = ({ center, zoom = 12, reports, focus = null, highlightId, onReportSelect }: Props) => (
+const CityReportsMap = ({ center, bounds, zoom = 12, reports, focus = null, highlightId, onReportSelect, children, zoomSnap = 1 }: Props) => (
   <MapContainer
-    center={center}
+    center={bounds ? undefined : center}
+    bounds={bounds}
+    zoomSnap={zoomSnap}
     zoom={zoom}
     minZoom={7}
     maxZoom={19}
@@ -108,6 +116,7 @@ const CityReportsMap = ({ center, zoom = 12, reports, focus = null, highlightId,
     style={{ height: '100%', width: '100%', background: '#f4f4f2' }}
   >
     <TileLayer attribution={OSM_ATTRIBUTION} url={OSM_TILE_URL} maxZoom={OSM_MAX_ZOOM} />
+    {children}
     <ReportsLayer reports={reports} highlightId={highlightId} onReportSelect={onReportSelect} />
     <FocusController focus={focus} />
   </MapContainer>

@@ -18,11 +18,8 @@ import { CONTACT_EMAIL, WHATSAPP_COMMUNITY_URL } from '@/config/community';
 import { PLAY_STORE_URL, IOS_APP_URL, BETA_TESTER_URL} from '@/config/appLinks';
 import { useI18n } from '@/i18n';
 import type { Dict } from '@/i18n';
-import { fetchPublicStats } from '@/services/geodhaService';
-import type { PublicStats } from '@/services/geodhaService';
-
-// Added to the Firestore reports count before display.
-const REPORTS_OFFSET = 50;
+import { fetchPublicStats, fetchReportStats } from '@/services/geodhaService';
+import type { PublicStats, ReportStats } from '@/services/geodhaService';
 
 // ── App screenshots (swap/reorder freely; captions stay minimal) ─────────────
 import shot1 from '@/assets/screenshot1.jpg';
@@ -143,18 +140,23 @@ const Index = () => {
   const { t } = useI18n();
   const l = t.landing;
 
-  // Live counters (refreshed weekly); tiles are hidden until loaded / on failure.
+  // Counters: app users from the weekly summary, reports sent to Sahaaya from
+  // the daily (22:00 IST) report stats. Each tile is hidden until loaded / on failure.
   const [live, setLive] = useState<PublicStats | null>(null);
+  const [reportStats, setReportStats] = useState<ReportStats | null>(null);
   useEffect(() => {
     let cancelled = false;
     fetchPublicStats().then((s) => { if (!cancelled) setLive(s); });
+    fetchReportStats().then((s) => { if (!cancelled) setReportStats(s); });
     return () => { cancelled = true; };
   }, []);
 
   const STATS = [
     ...(live ? [
       { value: `${live.registeredUsers.toLocaleString()}+`, label: l.statUsers, color: 'text-secondary' },
-      { value: `${(live.sahaayaReportsFiled + REPORTS_OFFSET).toLocaleString()}+`, label: l.statReports, color: 'text-primary' },
+    ] : []),
+    ...(reportStats ? [
+      { value: `${reportStats.city.sentToSahaaya.toLocaleString()}+`, label: l.statReports, color: 'text-primary' },
     ] : []),
     { value: '~10',  label: l.statCaseStudies, color: 'text-accent' },
   ];
