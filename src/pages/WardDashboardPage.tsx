@@ -1,11 +1,12 @@
 // /dashboard/:slug — ward dashboard (e.g. bscc-31, Kasavanahalli). Reached by
 // direct URL only. Two tabs (?tab=blackspots selects the second):
 //
-// • Wet waste pickup — daily snapshot published at 22:00 IST by the app
-//   backend: day documents in geodha_public_truck_maps (counts + PNG) and the
-//   newest day's pins in geodha_public_truck_map_pins. The newest day is an
-//   interactive map; earlier days (or a pins mismatch) show the stored PNG.
-//   ?day=YYYY-MM-DD picks an earlier day.
+// • Wet waste pickup — campaign summary (fixed figures + a daily chart, when
+//   the ward has one), then the daily snapshot published at 22:00 IST by the
+//   app backend: day documents in geodha_public_truck_maps (counts + PNG) and
+//   the newest day's pins in geodha_public_truck_map_pins. The newest day is
+//   an interactive map; earlier days (or a pins mismatch) show the stored PNG.
+//   ?day=YYYY-MM-DD picks an earlier day. Then the ward's waste report numbers.
 // • Blackspots — live GEODHA app reports focused on the ward, with neighbouring
 //   wards for context: the ward's waste report numbers (daily snapshot from
 //   geodha_public_stats/reports), a map, and a carousel of large spots.
@@ -16,13 +17,16 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { GeoJSON } from 'react-leaflet';
 import type L from 'leaflet';
-import { AlertCircle, ArrowLeft, Download, Loader2, Maximize2, RotateCw, X, ZoomIn, ZoomOut } from 'lucide-react';
+import {
+  AlertCircle, ArrowLeft, ChevronDown, ChevronLeft, ChevronRight, Download, Loader2, Maximize2, RotateCw, X, ZoomIn, ZoomOut,
+} from 'lucide-react';
 
 import NotFound from './NotFound';
 import StoreButtons from '@/components/StoreButtons';
 import MapErrorBoundary from '@/components/MapErrorBoundary';
 import TruckPinsMap, { TRUCK_PIN_COLORS } from '@/components/TruckPinsMap';
 import CityReportsMap from '@/components/CityReportsMap';
+import WetWasteCampaign from '@/components/WetWasteCampaign';
 import MapFitLimit from '@/components/MapFitLimit';
 import { ReportDialog } from '@/components/ReportCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -198,17 +202,26 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
 
   const fmtLongDate = (k: string) => dayDate(k).toLocaleDateString(dl, { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const fmtAltDate  = (k: string) => dayDate(k).toLocaleDateString(dl, { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' });
-  const fmtChipDay  = (k: string) => dayDate(k).toLocaleDateString(dl, { timeZone: 'UTC', weekday: 'short' });
-  const fmtChipDate = (k: string) => dayDate(k).toLocaleDateString(dl, { timeZone: 'UTC', day: 'numeric', month: 'short' });
+  const fmtOption   = (k: string) => dayDate(k).toLocaleDateString(dl, { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' });
   const fmtUpdated  = (d: Date) => `${d.toLocaleString(dl, { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} IST`;
   const fmtNum      = (n: number) => n.toLocaleString(dl);
   const pct         = (d: TruckMapDay) => (d.residents > 0 ? Math.round((d.collected / d.residents) * 100) : 0);
 
   const alt = day ? t.truckMap.mapAlt(wardName, fmtAltDate(day.dateKey), day.residents, day.collected, day.missed) : '';
 
+  // Day picker: newest first, so "earlier" moves down the list.
+  const dayIdx = day ? days.indexOf(day) : -1;
+
   return (
     <>
-      <p className="text-base sm:text-lg text-foreground/75 mb-5">{t.truckMap.subtitle}</p>
+      {config.campaign && (
+        <div className="mb-12">
+          <WetWasteCampaign campaign={config.campaign} days={days} />
+        </div>
+      )}
+
+      <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={ARCHIVO}>{t.campaign.mapTitle}</h2>
+      <p className="mt-1 text-base sm:text-lg text-foreground/75 mb-5">{t.truckMap.subtitle}</p>
 
       {isLoading ? (
         <LoadingSkeleton />
@@ -231,9 +244,46 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
         </div>
       ) : (
         <>
+          {/* ── Day picker ───────────────────────────────────────────── */}
+          {days.length > 1 && (
+            <div className="mb-4 flex items-stretch gap-2">
+              <button
+                onClick={() => pickDay(days[dayIdx + 1])}
+                disabled={dayIdx >= days.length - 1}
+                aria-label={t.truckMap.prevDay}
+                className="shrink-0 rounded-xl border-2 border-ink bg-paper px-2.5 disabled:opacity-30"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <label className="relative flex-1 min-w-0">
+                <span className="sr-only">{t.truckMap.pickDay}</span>
+                <select
+                  value={day.dateKey}
+                  onChange={(e) => { const d = days.find((x) => x.dateKey === e.target.value); if (d) pickDay(d); }}
+                  className="w-full appearance-none rounded-xl border-2 border-ink bg-paper py-2.5 pl-3 pr-9 text-sm font-extrabold"
+                >
+                  {days.map((d) => (
+                    <option key={d.dateKey} value={d.dateKey}>
+                      {fmtOption(d.dateKey)} · {pct(d)}%
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+              </label>
+              <button
+                onClick={() => pickDay(days[dayIdx - 1])}
+                disabled={dayIdx <= 0}
+                aria-label={t.truckMap.nextDay}
+                className="shrink-0 rounded-xl border-2 border-ink bg-paper px-2.5 disabled:opacity-30"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          )}
+
           {/* ── Date ─────────────────────────────────────────────────── */}
           <div>
-            <h2 className="text-xl sm:text-2xl font-extrabold" style={ARCHIVO}>{fmtLongDate(day.dateKey)}</h2>
+            <h3 className="text-xl sm:text-2xl font-extrabold" style={ARCHIVO}>{fmtLongDate(day.dateKey)}</h3>
             <p className="text-sm text-foreground/70 mt-0.5">
               {t.truckMap.snapshotNote(fmtAltDate(day.dateKey))}
               {day.generatedAt && <> {t.truckMap.updated} {fmtUpdated(day.generatedAt)}.</>}
@@ -316,38 +366,9 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
             )}
           </a>
 
-          {/* ── Day picker ───────────────────────────────────────────── */}
-          {days.length > 1 && (
-            <div className="mt-8">
-              <p className="mono-label mb-2">{t.truckMap.pickDay}</p>
-              <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0" role="group" aria-label={t.truckMap.pickDay}>
-                {days.map((d) => {
-                  const active = d === day;
-                  return (
-                    <button
-                      key={d.dateKey}
-                      onClick={() => pickDay(d)}
-                      aria-pressed={active}
-                      className={cn(
-                        'shrink-0 min-w-[4.5rem] rounded-xl border-2 border-ink px-3 py-2 text-center transition-colors',
-                        active ? 'bg-ink text-paper' : 'bg-paper hover:bg-muted',
-                      )}
-                    >
-                      <span className="block text-[11px] font-bold uppercase opacity-70">{fmtChipDay(d.dateKey)}</span>
-                      <span className="block text-sm font-extrabold whitespace-nowrap">{fmtChipDate(d.dateKey)}</span>
-                      <span className="block text-[11px] font-bold tabular-nums" style={{ color: active ? undefined : pct(d) >= 50 ? '#15803d' : '#b91c1c' }}>
-                        {pct(d)}%
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* ── Explainer ────────────────────────────────────────────── */}
           <div className="mt-8 rounded-2xl border-2 border-ink bg-paper p-4 sm:p-5">
-            <h2 className="font-extrabold">{t.truckMap.explainTitle}</h2>
+            <h3 className="font-extrabold">{t.truckMap.explainTitle}</h3>
             <ul className="mt-3 space-y-2 text-sm">
               <li>{t.truckMap.explainDot}</li>
               <li className="flex items-start gap-2"><LegendDot color={TRUCK_PIN_COLORS.collected} />{t.truckMap.explainGreen}</li>
@@ -363,6 +384,17 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
             <MapViewer day={day} alt={alt} onClose={() => setViewerOpen(false)} />
           )}
         </>
+      )}
+
+      <div className="mt-12">
+        <WardReportStats config={config} wardName={wardName} />
+      </div>
+
+      {config.campaign && (
+        <div className="mt-8 rounded-2xl border-2 border-dashed border-ink/40 bg-muted p-4 sm:p-5">
+          <h3 className="font-extrabold">{t.campaign.howTitle}</h3>
+          <p className="mt-1.5 text-sm text-foreground/75 leading-relaxed">{t.campaign.howBody}</p>
+        </div>
       )}
     </>
   );
@@ -418,16 +450,6 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
   );
   const inWard = useMemo(() => nearby.filter((r) => inFeature(reportLatLng(r)!, feature)), [nearby, feature]);
 
-  // Headline numbers come from the daily (22:00 IST) snapshot, read once per
-  // page load — not from the reports above.
-  const { data: reportStats, isLoading: statsLoading } = useQuery({
-    queryKey: ['reportStats'],
-    queryFn: fetchReportStats,
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-  });
-  const wardStats = reportStats?.wards[config.wardKey];
-
   const largeReports = useMemo(
     () => inWard.filter((r) => reportSize(r) === 'large' && r.photos?.[0]).slice(0, CAROUSEL_LIMIT),
     [inWard],
@@ -463,33 +485,11 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
     (layer as L.Path).bindTooltip(locale === 'kn' ? p.ward_name_kn : p.ward_name, { sticky: true });
   }, [locale]);
 
-  const fmtNum  = (n: number) => n.toLocaleString(dl);
   const fmtDate = (ts: unknown) => toDate(ts)?.toLocaleDateString(dl, { day: 'numeric', month: 'short', year: 'numeric' }) ?? '';
-  const stat    = (n: number | undefined) => (n == null ? '—' : fmtNum(n));
 
   return (
     <>
-      {/* ── Waste report numbers (daily snapshot) ────────────────────── */}
-      <p className="mono-label mb-2">{t.truckMap.bsStatsScope(wardName)}</p>
-      {!statsLoading && !wardStats ? (
-        <p className="rounded-2xl border-[3px] border-dashed border-ink/40 bg-muted px-4 py-5 text-center text-sm font-bold">
-          {t.truckMap.rsUnavailable}
-        </p>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
-            <CountTile value={stat(wardStats?.totalReports)}    label={t.truckMap.rsTotal}    tint="bg-paper" />
-            <CountTile value={stat(wardStats?.sentToSahaaya)}   label={t.truckMap.rsSent}     tint="bg-tint-blue" />
-            <CountTile value={stat(wardStats?.closedOnSahaaya)} label={t.truckMap.rsClosed}   tint="bg-tint-yellow" dot={STATUS_COLORS.closed} />
-            <CountTile value={stat(wardStats?.resolvedByUsers)} label={t.truckMap.rsResolved} tint="bg-tint-green"  dot={STATUS_COLORS.resolved} />
-          </div>
-          {reportStats?.updatedAt && (
-            <p className="mt-2 text-xs text-foreground/60">
-              {t.truckMap.rsUpdated(`${reportStats.updatedAt.toLocaleString(dl, { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} IST`)}
-            </p>
-          )}
-        </>
-      )}
+      <WardReportStats config={config} wardName={wardName} />
 
       {/* ── Map ──────────────────────────────────────────────────────── */}
       <div ref={mapRef}>
@@ -576,6 +576,49 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
       </div>
 
       <ReportDialog report={selected} onClose={() => setSelected(null)} onViewOnMap={viewOnMap} />
+    </>
+  );
+}
+
+// ── Ward waste report numbers (daily snapshot, both tabs) ───────────────────
+
+function WardReportStats({ config, wardName }: { config: WardDashboard; wardName: string }) {
+  const { t, locale } = useI18n();
+  const dl = DATE_LOCALES[locale];
+
+  // Daily (22:00 IST) snapshot, read once per page load.
+  const { data: reportStats, isLoading: statsLoading } = useQuery({
+    queryKey: ['reportStats'],
+    queryFn: fetchReportStats,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
+  const wardStats = reportStats?.wards[config.wardKey];
+  const stat = (n: number | undefined) => (n == null ? '—' : n.toLocaleString(dl));
+
+  return (
+    <>
+      {/* ── Waste report numbers (daily snapshot) ────────────────────── */}
+      <p className="mono-label mb-2">{t.truckMap.bsStatsScope(wardName)}</p>
+      {!statsLoading && !wardStats ? (
+        <p className="rounded-2xl border-[3px] border-dashed border-ink/40 bg-muted px-4 py-5 text-center text-sm font-bold">
+          {t.truckMap.rsUnavailable}
+        </p>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
+            <CountTile value={stat(wardStats?.totalReports)}    label={t.truckMap.rsTotal}    tint="bg-paper" />
+            <CountTile value={stat(wardStats?.sentToSahaaya)}   label={t.truckMap.rsSent}     tint="bg-tint-blue" />
+            <CountTile value={stat(wardStats?.closedOnSahaaya)} label={t.truckMap.rsClosed}   tint="bg-tint-yellow" dot={STATUS_COLORS.closed} />
+            <CountTile value={stat(wardStats?.resolvedByUsers)} label={t.truckMap.rsResolved} tint="bg-tint-green"  dot={STATUS_COLORS.resolved} />
+          </div>
+          {reportStats?.updatedAt && (
+            <p className="mt-2 text-xs text-foreground/60">
+              {t.truckMap.rsUpdated(`${reportStats.updatedAt.toLocaleString(dl, { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} IST`)}
+            </p>
+          )}
+        </>
+      )}
     </>
   );
 }

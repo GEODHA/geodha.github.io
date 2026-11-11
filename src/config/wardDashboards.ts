@@ -3,6 +3,9 @@
 // Slug: "b" + corporation initial + "cc-" + official ward number,
 // e.g. bscc-31 = Bengaluru South City Corporation, ward 31.
 
+import { KASAVANAHALLI_CAMPAIGN } from './wardCampaigns';
+import type { WardCampaign } from './wardCampaigns';
+
 export interface WardDashboard {
   /** Backend key, `{zone}_{wardNumber}` — matches the docs' `wardKey`. */
   wardKey: string;
@@ -10,8 +13,10 @@ export interface WardDashboard {
   wardNum: number;
   /** Hindi ward name (Kannada and English come from the boundary data). */
   nameHi:  string;
+  /** Campaign summary shown above the daily map (fixed figures). */
+  campaign?: WardCampaign;
 }
 
 export const WARD_DASHBOARDS: Record<string, WardDashboard> = {
-  'bscc-31': { wardKey: 'South_31', wardNum: 216, nameHi: 'कसवनहल्ली' },
+  'bscc-31': { wardKey: 'South_31', wardNum: 216, nameHi: 'कसवनहल्ली', campaign: KASAVANAHALLI_CAMPAIGN },
 };

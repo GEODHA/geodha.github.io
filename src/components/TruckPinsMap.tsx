@@ -59,6 +59,10 @@ function PinsLayer({ data, labels }: { data: TruckMapPins; labels: TruckPinsMapL
       groups.set(k, [...(groups.get(k) ?? []), i]);
     });
 
+    // Popups no wider than the map (content width plus Leaflet's ~44px padding), so
+    // long street names wrap instead of overflowing.
+    const popupMaxWidth = Math.max(140, Math.min(280, map.getSize().x - 96));
+
     const layer = L.layerGroup();
     for (const idxs of groups.values()) {
       const n = idxs.length;
@@ -83,7 +87,7 @@ function PinsLayer({ data, labels }: { data: TruckMapPins; labels: TruckPinsMapL
         ].filter(Boolean);
         marker.bindPopup(
           `<div style="font-size:13px;line-height:1.4;overflow-wrap:anywhere">${lines.join('<br/>')}</div>`,
-          { closeButton: false, minWidth: 160, maxWidth: popupMaxWidth(), autoPanPadding: L.point(12, 12) },
+          { closeButton: false, minWidth: 140, maxWidth: popupMaxWidth, autoPanPadding: L.point(12, 12) },
         );
         layer.addLayer(marker);
       });
@@ -95,9 +99,6 @@ function PinsLayer({ data, labels }: { data: TruckMapPins; labels: TruckPinsMapL
 
   return null;
 }
-
-/** Popup width that fits a phone screen, so long street names wrap instead of overflowing. */
-const popupMaxWidth = () => Math.min(280, (typeof window !== 'undefined' ? window.innerWidth : 320) - 64);
 
 const TruckPinsMap = ({ data, labels }: { data: TruckMapPins; labels: TruckPinsMapLabels }) => {
   const hasBoundary = data.boundary.length > 2;
