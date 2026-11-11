@@ -73,8 +73,8 @@ function Comparison({ before, after }: { before: CampaignComparison; after: Camp
       emphasis: true,
       value: (p) => (
         <>
-          <span className="block text-3xl sm:text-4xl font-extrabold tabular-nums leading-none" style={ARCHIVO}>{pctOf(p.collected, p.residentDays)}%</span>
-          <span className="block mt-1 text-xs font-medium text-foreground/70">{c.ofResidentDays(p.collected, p.residentDays)}</span>
+          <span className="block text-3xl sm:text-4xl font-extrabold tabular-nums leading-none" style={ARCHIVO}>{pctOf(p.collected, p.reports)}%</span>
+          <span className="block mt-1 text-xs font-medium text-foreground/70">{c.ofReports(p.collected, p.reports)}</span>
         </>
       ),
     },

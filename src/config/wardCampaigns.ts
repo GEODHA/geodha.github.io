@@ -6,9 +6,9 @@
 export interface CampaignComparison {
   residents:  number;
   checkins:   number;
-  /** Resident-days with wet waste collected, out of `residentDays`. */
+  /** Reports (one per resident per day) with wet waste collected, out of `reports`. */
   collected:  number;
-  residentDays: number;
+  reports:    number;
   /** Residents who went 4+ days in a row without a pickup. */
   longMissed: number;
   /** Longest stretch without a pickup, in days. */
@@ -43,11 +43,11 @@ export const KASAVANAHALLI_CAMPAIGN: WardCampaign = {
   seriesEnd:  '2026-11-10',
   markerDate: '2026-11-04',
   before: {
-    residents: 78, checkins: 361, collected: 59, residentDays: 306,
+    residents: 78, checkins: 361, collected: 59, reports: 306,
     longMissed: 8, longestGap: 8, fullDays: 0, totalDays: 11, complaints: 75, complaintsClosed: 1,
   },
   after: {
-    residents: 54, checkins: 205, collected: 158, residentDays: 170,
+    residents: 54, checkins: 205, collected: 158, reports: 170,
     longMissed: 0, longestGap: 1, fullDays: 3, totalDays: 7, complaints: 5,
   },
 };
