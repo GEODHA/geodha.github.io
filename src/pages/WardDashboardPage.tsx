@@ -6,7 +6,7 @@
 //   app backend: day documents in geodha_public_truck_maps (counts + PNG) and
 //   the newest day's pins in geodha_public_truck_map_pins. The newest day is
 //   an interactive map; earlier days (or a pins mismatch) show the stored PNG.
-//   ?day=YYYY-MM-DD picks an earlier day. Then the ward's waste report numbers.
+//   ?day=YYYY-MM-DD picks an earlier day.
 // • Blackspots — live GEODHA app reports focused on the ward, with neighbouring
 //   wards for context: the ward's waste report numbers (daily snapshot from
 //   geodha_public_stats/reports), a map, and a carousel of large spots.
@@ -386,12 +386,8 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
         </>
       )}
 
-      <div className="mt-12">
-        <WardReportStats config={config} wardName={wardName} />
-      </div>
-
       {config.campaign && (
-        <div className="mt-8 rounded-2xl border-2 border-dashed border-ink/40 bg-muted p-4 sm:p-5">
+        <div className="mt-10 rounded-2xl border-2 border-dashed border-ink/40 bg-muted p-4 sm:p-5">
           <h3 className="font-extrabold">{t.campaign.howTitle}</h3>
           <p className="mt-1.5 text-sm text-foreground/75 leading-relaxed">{t.campaign.howBody}</p>
         </div>
@@ -580,7 +576,7 @@ function BlackspotsTab({ slug, config, wardName }: { slug: string; config: WardD
   );
 }
 
-// ── Ward waste report numbers (daily snapshot, both tabs) ───────────────────
+// ── Ward waste report numbers (daily snapshot) ──────────────────────────────
 
 function WardReportStats({ config, wardName }: { config: WardDashboard; wardName: string }) {
   const { t, locale } = useI18n();

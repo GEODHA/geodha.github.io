@@ -169,7 +169,7 @@ export const en = {
   },
   // Ward campaign summary (Wet waste pickup tab, src/components/WetWasteCampaign.tsx).
   campaign: {
-    headline: 'From 1 in 5 to 9 in 10: wet waste pickup in Kasavanahalli',
+    headline: 'Wet waste pickup in Kasavanahalli: up from 19% to 93%',
     subline: '90 residents logged 652 daily check-ins between 21 October and 10 November 2026.',
     colBefore: 'When tracking began',
     colBeforeDates: '21–31 Oct',
@@ -205,7 +205,7 @@ export const en = {
     did3Body: 'Since the new contractor started on 4 November, wet waste has been collected in 93% of reports, with 100% on 3 of the first 7 days. Missed pickups are flagged the same day, so they can be followed up quickly.',
     mapTitle: 'Daily map',
     howTitle: 'How we count',
-    howBody: 'One answer per resident per day, adding up their check-ins. The campaign is about wet waste, so a check-in without a waste type counts as wet waste. Data comes from residents who chose to take part, not a survey of every household.',
+    howBody: 'One answer per resident per day, adding up their check-ins. Data comes from residents who chose to take part, not a survey of every household.',
   },
   // Jalandhar city data page (src/pages/JalandharPage.tsx) + shared report card.
   jalandhar: {
