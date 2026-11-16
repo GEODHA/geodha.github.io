@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { existsSync } from "fs";
 import type { Plugin } from "vite"; // used by optionalAdminPlugin
+import blogStatic, { cmsIndex } from "./vite-plugins/blogStatic";
 
 // ── Optional admin plugin ─────────────────────────────────────────────────────
 // src/admin/ is gitignored (local-only). When absent (CI/CD, fresh clones),
@@ -39,6 +40,8 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     optionalAdminPlugin,
+    blogStatic(), // per-post link-preview pages + RSS (build only)
+    cmsIndex(),   // serve public/cms/index.html at /cms/ locally
   ],
   resolve: {
     alias: {

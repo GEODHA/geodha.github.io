@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import Index from "./pages/Index";
 import DashboardPage from "./pages/DashboardPage";
 import ReportPage from "./pages/ReportPage";
-import Blog from "./pages/Blog";
 import About from "./pages/About";
 import GetStarted from "./pages/GetStarted";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -29,6 +28,10 @@ const AdminLayout       = lazy(() => import("./admin/pages/AdminLayout"));
 const ActionsAdmin      = lazy(() => import("./admin/pages/ActionsAdmin"));
 const TestimonialsAdmin = lazy(() => import("./admin/pages/TestimonialsAdmin"));
 const WardDataAdmin     = lazy(() => import("./admin/pages/WardDataAdmin"));
+
+// Blog pages carry the Markdown renderer and post content — load on demand.
+const Blog     = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 
 const queryClient = new QueryClient();
 
@@ -68,7 +71,9 @@ function RouteTracker() {
   useEffect(() => {
     document.title =
       ROUTE_TITLES[pathname] ??
-      (pathname.startsWith('/admin') ? 'Admin — GEODHA' : DEFAULT_TITLE);
+      (pathname.startsWith('/admin') ? 'Admin — GEODHA'
+        : pathname.startsWith('/blog/') ? 'Blog — GEODHA' // BlogPost sets the post title
+        : DEFAULT_TITLE);
     if (typeof gtag === 'undefined') return;
     gtag('event', 'page_view', {
       page_path:  pathname,
@@ -128,6 +133,7 @@ const App = () => {
                     <Route path="/data"      element={<Navigate to="/dashboard" replace />} />
                     <Route path="/report"    element={<ReportPage />} />
                     <Route path="/blog"      element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
                     <Route path="/map"       element={<LegacyMapRedirect />} />
                     <Route path="/about"     element={<About />} />
                     <Route path="/privacy"   element={<PrivacyPolicy />} />

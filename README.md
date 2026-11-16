@@ -28,7 +28,7 @@ GEODHA is a civic accountability platform piloting in Bengaluru, India. The webs
 | `/dashboard/bscc-31` | Kasavanahalli (Bengaluru South, ward 31) ward dashboard, reached by direct URL only. **Wet waste pickup** tab: the daily 10 PM IST snapshot from `geodha_public_truck_maps` (counts + PNG) and `geodha_public_truck_map_pins` (newest day as an interactive map; earlier days as PNG; dropdown day picker, `?day=YYYY-MM-DD`; no "% collected" after 10 Nov, when residents switched to reporting only missed pickups), then the campaign summary (fixed before/after figures, daily chart to 11 Nov and cards from `src/config/wardCampaigns.ts`). **Blackspots** tab (`?tab=blackspots`): ward waste report numbers from `geodha_public_stats/reports` (daily snapshot), app reports in and around the ward on a map, large-spot row. Ward maps pan/zoom freely but can't zoom out much past the ward. Add wards in `src/config/wardDashboards.ts`. |
 | `/data` | Data & analysis — open burning × vulnerable communities |
 | `/report` | Report a Problem — mobile-optimised form |
-| `/blog` | Blog (Notion embed) |
+| `/blog` | Blog — articles, newsletters and case studies from `content/blog/` (filters `?type=`, `?tag=`); posts at `/blog/<slug>` with share links and Giscus comments; RSS at `/blog/rss.xml`. Team edits posts in Decap CMS at `/cms/` (GitHub login). See [docs/BLOG.md](docs/BLOG.md). |
 | `/map` | Legacy map/reports view — preserved |
 | `/jalandhar` | Jalandhar (Punjab) city data page — live report map, size/status filters, Punjab-wide counts, large-spot and before/after cleanup carousels. Defaults to Hindi. |
 | `/about` | About GEODHA |
@@ -50,7 +50,6 @@ Copy `.env.example` to `.env` and fill in real values. **Never commit `.env`.**
 | `VITE_FIREBASE_APP_ID` | Firebase app ID | Yes |
 | `VITE_FIREBASE_MEASUREMENT_ID` | Firebase Analytics measurement ID | Yes |
 | `VITE_FIREBASE_VAPID_KEY` | Firebase VAPID key (push notifications) | Yes |
-| `VITE_BLOG_NOTION_URL` | Notion embed URL for `/blog` page | No (has default) |
 | `VITE_REPORT_FORM_URL` | External form URL for `/report` submissions | No |
 
 ---

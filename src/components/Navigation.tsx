@@ -27,9 +27,11 @@ const Navigation = () => {
   const currentCity =
     cities.find((c) => currentPath.toLowerCase().startsWith(c.prefix) && c.path !== '/dashboard') ?? cities[0];
 
-  // Ward dashboards (/dashboard/bscc-31, …) sit under Dashboard.
+  // Ward dashboards (/dashboard/bscc-31, …) sit under Dashboard; posts under Blog.
   const isActive = (path: string) =>
-    currentPath === path || (path === '/dashboard' && currentPath.startsWith('/dashboard/'));
+    currentPath === path ||
+    (path === '/dashboard' && currentPath.startsWith('/dashboard/')) ||
+    (path === '/blog' && currentPath.startsWith('/blog/'));
 
   const handleNavigation =(path: string) => {
     setIsMobileMenuOpen(false);

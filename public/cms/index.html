@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>GEODHA Blog — Editor</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <!-- Decap CMS reads ./config.yml. Editing guide: docs/BLOG.md -->
+    <script src="https://unpkg.com/decap-cms@3.17.3/dist/decap-cms.js"></script>
+    <script>
+      // Make the editor's preview pane read roughly like the live post page.
+      CMS.registerPreviewStyle(
+        [
+          "@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800;900&display=swap');",
+          "body{font-family:Archivo,system-ui,sans-serif;color:#151513;line-height:1.7;max-width:46rem;margin:2rem auto;padding:0 1rem;font-size:18px}",
+          "h1,h2,h3,h4{font-weight:900;letter-spacing:-0.01em;line-height:1.2}",
+          "h1{font-size:2.4rem}",
+          "a{color:#0d7a3e}",
+          "img{max-width:100%;border:2px solid #151513;border-radius:12px}",
+          "blockquote{border-left:4px solid #0d7a3e;margin:1.5rem 0;padding-left:1rem;color:#555}",
+          "hr{border:0;border-top:1px solid #ddd;margin:2rem 0}",
+        ].join("\n"),
+        { raw: true },
+      );
+    </script>
+  </body>
+</html>

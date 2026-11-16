@@ -1,0 +1,11 @@
+# Cloudflare Worker that handles "Login with GitHub" for Decap CMS (/cms/).
+# Deploy from this folder:  npx wrangler@4 deploy
+# Secrets (never commit):   npx wrangler@4 secret put GITHUB_CLIENT_ID
+#                           npx wrangler@4 secret put GITHUB_CLIENT_SECRET
+name = "geodha-cms-auth"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Sites allowed to receive the GitHub token. Add a preview origin here if needed.
+ALLOWED_ORIGINS = "https://geodha.org,https://www.geodha.org"

@@ -1,0 +1,162 @@
+# Decap CMS configuration for the GEODHA blog (served at https://www.geodha.org/cms/).
+# Docs: https://decapcms.org/docs/configuration-options/  ·  Team guide: docs/BLOG.md
+#
+# Posts are Markdown files in content/blog/<type>/<slug>.md. The folder decides
+# the post type, and src/lib/blogParse.ts must stay in sync with the fields below.
+
+backend:
+  name: github
+  repo: GEODHA/geodha.github.io
+  branch: main                     # publishing merges into main, which deploys the site
+  # GitHub sign-in goes through our OAuth proxy (cms-auth/ in this repo, a
+  # Cloudflare Worker). Replace with the deployed worker's URL.
+  base_url: https://geodha-cms-auth.geodha.workers.dev
+  auth_endpoint: auth
+  auth_scope: public_repo          # the repo is public; no access to private repos needed
+  squash_merges: true
+  commit_messages:
+    create: "Blog: create {{collection}} “{{slug}}”"
+    update: "Blog: update {{collection}} “{{slug}}”"
+    delete: "Blog: delete {{collection}} “{{slug}}”"
+    uploadMedia: "Blog: upload “{{path}}”"
+    deleteMedia: "Blog: delete “{{path}}”"
+    openAuthoring: "{{message}}"
+
+# Drafts → In review → Ready. Every draft is a pull request, so teammates can
+# review it on GitHub; "Publish" merges it and the site redeploys (~2 min).
+publish_mode: editorial_workflow
+
+# `npm run cms` + `npm run dev` lets you edit against your local files at
+# http://localhost:8080/cms/ without signing in. Ignored on the live site.
+local_backend: true
+
+site_url: https://www.geodha.org
+display_url: https://www.geodha.org
+logo_url: /favicon.svg
+
+media_folder: public/blog-media
+public_folder: /blog-media
+
+slug:
+  encoding: ascii
+  clean_accents: true
+
+# ── Shared fields ────────────────────────────────────────────────────────────
+x-fields:
+  title: &title { label: Title, name: title, widget: string }
+  date: &date { label: Publish date, name: date, widget: datetime }
+  summary: &summary
+    label: Summary
+    name: summary
+    widget: text
+    hint: One or two sentences. Shown on the blog cards and in WhatsApp/LinkedIn/X link previews.
+  cover: &cover
+    label: Cover image
+    name: cover
+    widget: image
+    required: false
+    hint: Landscape works best (about 1600×900). Also used as the link-preview image.
+  cover_alt: &cover_alt
+    label: Cover image description
+    name: cover_alt
+    widget: string
+    required: false
+    hint: Describe the image for screen readers.
+  authors: &authors
+    label: Authors
+    name: authors
+    widget: list
+    default: [GEODHA Team]
+  tags: &tags
+    label: Tags
+    name: tags
+    widget: list
+    required: false
+    hint: "Comma-separated, e.g. Waste & Infrastructure, Bengaluru"
+  featured: &featured
+    label: Feature at the top of the blog
+    name: featured
+    widget: boolean
+    default: false
+    required: false
+  draft: &draft
+    label: Hide from the live site
+    name: draft
+    widget: boolean
+    default: false
+    required: false
+    hint: Keeps a published post off the site without deleting it.
+  body: &body { label: Body, name: body, widget: markdown }
+
+collections:
+  - name: articles
+    label: Articles
+    label_singular: Article
+    description: Opinion pieces, explainers and guides.
+    folder: content/blog/articles
+    create: true
+    slug: "{{slug}}"
+    preview_path: "blog/{{slug}}"
+    summary: "{{title}} · {{date | date('D MMM YYYY')}}"
+    sortable_fields: [date, title]
+    view_filters:
+      - { label: Featured, field: featured, pattern: true }
+      - { label: Hidden, field: draft, pattern: true }
+    fields: [*title, *date, *summary, *cover, *cover_alt, *authors, *tags, *featured, *draft, *body]
+
+  - name: newsletters
+    label: Newsletters
+    label_singular: Newsletter
+    description: Regular updates on what is happening at GEODHA.
+    folder: content/blog/newsletters
+    create: true
+    slug: "{{slug}}"
+    preview_path: "blog/{{slug}}"
+    summary: "#{{issue}} {{title}} · {{date | date('D MMM YYYY')}}"
+    sortable_fields: [date, issue, title]
+    fields:
+      - *title
+      - { label: Issue number, name: issue, widget: number, value_type: int, min: 1, required: false }
+      - *date
+      - *summary
+      - *cover
+      - *cover_alt
+      - *authors
+      - *tags
+      - *featured
+      - *draft
+      - *body
+
+  - name: case-studies
+    label: Case studies
+    label_singular: Case study
+    description: Stories of change on the ground, with the numbers behind them.
+    folder: content/blog/case-studies
+    create: true
+    slug: "{{slug}}"
+    preview_path: "blog/{{slug}}"
+    summary: "{{title}} · {{date | date('D MMM YYYY')}}"
+    sortable_fields: [date, title]
+    fields:
+      - *title
+      - *date
+      - *summary
+      - *cover
+      - *cover_alt
+      - { label: Location, name: location, widget: string, required: false, hint: "e.g. Kasavanahalli, Bengaluru" }
+      - { label: Partner organisation, name: partner, widget: string, required: false }
+      - label: Key numbers
+        name: highlights
+        widget: list
+        required: false
+        max: 6
+        summary: "{{fields.value}} — {{fields.label}}"
+        hint: Up to six headline figures shown in a box above the story.
+        fields:
+          - { label: Number, name: value, widget: string, hint: "e.g. 480 / 500, 63%, ~3,800" }
+          - { label: What it measures, name: label, widget: string }
+      - *authors
+      - *tags
+      - *featured
+      - *draft
+      - *body
