@@ -1,6 +1,7 @@
 // Fixed figures for a ward's campaign summary (top of the Wet waste pickup
 // tab). These come from the campaign write-up and are not computed from
-// Firestore; only the daily chart grows, with day documents after `seriesEnd`.
+// Firestore; only the daily chart grows, with day documents after `seriesEnd`
+// up to `chartEnd`.
 // Copy lives in the i18n `campaign` block.
 
 export interface CampaignComparison {
@@ -25,6 +26,8 @@ export interface WardCampaign {
   series:     [string, number, number][];
   /** Last day of the fixed series; later days come from the day documents. */
   seriesEnd:  string;
+  /** Last day the chart shows. */
+  chartEnd:   string;
   /** Day the chart marks with "New contractor engaged". */
   markerDate: string;
   before:     CampaignComparison;
@@ -41,6 +44,7 @@ export const KASAVANAHALLI_CAMPAIGN: WardCampaign = {
     ['2026-11-10', 24, 24],
   ],
   seriesEnd:  '2026-11-10',
+  chartEnd:   '2026-11-11',
   markerDate: '2026-11-04',
   before: {
     residents: 78, checkins: 361, collected: 59, reports: 306,

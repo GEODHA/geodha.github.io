@@ -1,12 +1,12 @@
 // /dashboard/:slug — ward dashboard (e.g. bscc-31, Kasavanahalli). Reached by
 // direct URL only. Two tabs (?tab=blackspots selects the second):
 //
-// • Wet waste pickup — campaign summary (fixed figures + a daily chart, when
-//   the ward has one), then the daily snapshot published at 22:00 IST by the
-//   app backend: day documents in geodha_public_truck_maps (counts + PNG) and
-//   the newest day's pins in geodha_public_truck_map_pins. The newest day is
-//   an interactive map; earlier days (or a pins mismatch) show the stored PNG.
-//   ?day=YYYY-MM-DD picks an earlier day.
+// • Wet waste pickup — the daily snapshot published at 22:00 IST by the app
+//   backend: day documents in geodha_public_truck_maps (counts + PNG) and the
+//   newest day's pins in geodha_public_truck_map_pins. The newest day is an
+//   interactive map; earlier days (or a pins mismatch) show the stored PNG.
+//   ?day=YYYY-MM-DD picks an earlier day. "% collected" is hidden after
+//   `pctUntil`. Below it, the campaign summary when the ward has one.
 // • Blackspots — live GEODHA app reports focused on the ward, with neighbouring
 //   wards for context: the ward's waste report numbers (daily snapshot from
 //   geodha_public_stats/reports), a map, and a carousel of large spots.
@@ -206,6 +206,7 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
   const fmtUpdated  = (d: Date) => `${d.toLocaleString(dl, { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })} IST`;
   const fmtNum      = (n: number) => n.toLocaleString(dl);
   const pct         = (d: TruckMapDay) => (d.residents > 0 ? Math.round((d.collected / d.residents) * 100) : 0);
+  const showPct     = (d: TruckMapDay) => !config.pctUntil || d.dateKey <= config.pctUntil;
 
   const alt = day ? t.truckMap.mapAlt(wardName, fmtAltDate(day.dateKey), day.residents, day.collected, day.missed) : '';
 
@@ -214,12 +215,6 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
 
   return (
     <>
-      {config.campaign && (
-        <div className="mb-12">
-          <WetWasteCampaign campaign={config.campaign} days={days} />
-        </div>
-      )}
-
       <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight" style={ARCHIVO}>{t.campaign.mapTitle}</h2>
       <p className="mt-1 text-base sm:text-lg text-foreground/75 mb-5">{t.truckMap.subtitle}</p>
 
@@ -264,7 +259,7 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
                 >
                   {days.map((d) => (
                     <option key={d.dateKey} value={d.dateKey}>
-                      {fmtOption(d.dateKey)} · {pct(d)}%
+                      {fmtOption(d.dateKey)}{showPct(d) && ` · ${pct(d)}%`}
                     </option>
                   ))}
                 </select>
@@ -299,12 +294,15 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
             <CountTile value={fmtNum(day.collected)} label={t.truckMap.statCollected} tint="bg-tint-green" dot={TRUCK_PIN_COLORS.collected} />
             <CountTile value={fmtNum(day.missed)}    label={t.truckMap.statMissed}    tint="bg-tint-red"   dot={TRUCK_PIN_COLORS.missed} />
           </div>
-          <p className="mt-3 text-sm font-bold">
-            {t.truckMap.pctCollected(pct(day))}
-            {day.longMissed > 0 && (
-              <span className="text-[#b91c1c]"> · {t.truckMap.longMissed(day.longMissed, day.streakDays)}</span>
-            )}
-          </p>
+          {(showPct(day) || day.longMissed > 0) && (
+            <p className="mt-3 text-sm font-bold">
+              {showPct(day) && t.truckMap.pctCollected(pct(day))}
+              {showPct(day) && day.longMissed > 0 && ' · '}
+              {day.longMissed > 0 && (
+                <span className="text-[#b91c1c]">{t.truckMap.longMissed(day.longMissed, day.streakDays)}</span>
+              )}
+            </p>
+          )}
 
           {/* ── Map: interactive for the newest day, PNG otherwise ───── */}
           {waitingForPins ? (
@@ -384,6 +382,12 @@ function WetWasteTab({ slug, config, wardName }: { slug: string; config: WardDas
             <MapViewer day={day} alt={alt} onClose={() => setViewerOpen(false)} />
           )}
         </>
+      )}
+
+      {config.campaign && (
+        <div className="mt-14">
+          <WetWasteCampaign campaign={config.campaign} days={days} />
+        </div>
       )}
 
       {config.campaign && (

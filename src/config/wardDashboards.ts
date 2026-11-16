@@ -15,8 +15,13 @@ export interface WardDashboard {
   nameHi:  string;
   /** Campaign summary shown above the daily map (fixed figures). */
   campaign?: WardCampaign;
+  /**
+   * Last day whose "% collected" is shown. After it residents were asked to
+   * report only missed pickups, so collected shares aren't meaningful.
+   */
+  pctUntil?: string;
 }
 
 export const WARD_DASHBOARDS: Record<string, WardDashboard> = {
-  'bscc-31': { wardKey: 'South_31', wardNum: 216, nameHi: 'कसवनहल्ली', campaign: KASAVANAHALLI_CAMPAIGN },
+  'bscc-31': { wardKey: 'South_31', wardNum: 216, nameHi: 'कसवनहल्ली', campaign: KASAVANAHALLI_CAMPAIGN, pctUntil: '2026-11-10' },
 };

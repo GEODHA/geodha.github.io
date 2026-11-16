@@ -1,7 +1,7 @@
 // Campaign summary at the top of a ward's Wet waste pickup tab: headline,
 // before/after comparison, daily collection chart and "What GEODHA did"
 // cards. Figures are fixed (src/config/wardCampaigns.ts); the chart appends
-// published day documents after the fixed series ends.
+// published day documents after the fixed series ends, up to `chartEnd`.
 
 import { useMemo, useState } from 'react';
 import {
@@ -156,7 +156,7 @@ function DailyChart({ campaign, days }: { campaign: WardCampaign; days: TruckMap
     const fixed = campaign.series.map(([dateKey, collected, residents]) => ({ dateKey, collected, residents }));
     // Day documents before the series end were counted slightly differently; the fixed series wins.
     const later = days
-      .filter((d) => d.dateKey > campaign.seriesEnd && d.residents > 0)
+      .filter((d) => d.dateKey > campaign.seriesEnd && d.dateKey <= campaign.chartEnd && d.residents > 0)
       .map(({ dateKey, collected, residents }) => ({ dateKey, collected, residents }))
       .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
     return [...fixed, ...later].map((d) => ({ ...d, pct: d.residents > 0 ? (d.collected / d.residents) * 100 : 0 }));
@@ -217,22 +217,22 @@ function DailyChart({ campaign, days }: { campaign: WardCampaign; days: TruckMap
       </button>
       {showData && (
         <div id="campaign-chart-data" className="mt-2 max-h-72 overflow-y-auto rounded-lg border border-ink/20">
-          <table className="w-full text-sm tabular-nums">
+          <table className="w-full text-xs sm:text-sm tabular-nums">
             <thead className="sticky top-0 bg-muted">
               <tr>
-                <th scope="col" className="px-3 py-2 text-left font-bold">{c.colDate}</th>
-                <th scope="col" className="px-3 py-2 text-right font-bold">{c.colCollected}</th>
-                <th scope="col" className="px-3 py-2 text-right font-bold">{c.colResidents}</th>
-                <th scope="col" className="px-3 py-2 text-right font-bold">{c.colPct}</th>
+                <th scope="col" className="px-2 sm:px-3 py-2 text-left font-bold">{c.colDate}</th>
+                <th scope="col" className="px-2 sm:px-3 py-2 text-right font-bold">{c.colCollected}</th>
+                <th scope="col" className="px-2 sm:px-3 py-2 text-right font-bold">{c.colResidents}</th>
+                <th scope="col" className="px-2 sm:px-3 py-2 text-right font-bold">{c.colPct}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink/10">
               {data.map((d) => (
                 <tr key={d.dateKey}>
-                  <th scope="row" className="px-3 py-1.5 text-left font-medium">{fmtShort(d.dateKey)}</th>
-                  <td className="px-3 py-1.5 text-right">{d.collected}</td>
-                  <td className="px-3 py-1.5 text-right">{d.residents}</td>
-                  <td className="px-3 py-1.5 text-right font-bold">{Math.round(d.pct)}%</td>
+                  <th scope="row" className="px-2 sm:px-3 py-1.5 text-left font-medium whitespace-nowrap">{fmtShort(d.dateKey)}</th>
+                  <td className="px-2 sm:px-3 py-1.5 text-right">{d.collected}</td>
+                  <td className="px-2 sm:px-3 py-1.5 text-right">{d.residents}</td>
+                  <td className="px-2 sm:px-3 py-1.5 text-right font-bold">{Math.round(d.pct)}%</td>
                 </tr>
               ))}
             </tbody>
