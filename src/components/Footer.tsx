@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Mail, Linkedin, Instagram, MessageSquare } from 'lucide-react';
 import reapBenefitLogo from '@/assets/reap-benefit-logo.png';
+import artparkLogo from '@/assets/artpark-logo.jpg';
 import StoreButtons from '@/components/StoreButtons';
 import { useI18n } from '@/i18n';
 
@@ -47,6 +48,7 @@ const Footer = () => {
           {/* Partners & Supporters */}
           <div>
             <h3 className={headCls}>{t.footer.partners}</h3>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <a
               href="https://www.reapbenefit.org"
               target="_blank"
@@ -62,6 +64,22 @@ const Footer = () => {
                 decoding="async"
               />
             </a>
+            <a
+              href="https://www.artpark.in"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block opacity-90 hover:opacity-100 transition-opacity"
+              aria-label="ARTPARK"
+            >
+              <img
+                src={artparkLogo}
+                alt="ARTPARK – AI & Robotics Technology Park @ IISc"
+                className="h-10 w-auto object-contain"
+                loading="lazy"
+                decoding="async"
+              />
+            </a>
+            </div>
           </div>
 
           {/* Platform */}

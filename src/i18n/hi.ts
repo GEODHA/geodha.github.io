@@ -49,7 +49,7 @@ export const hi: Dict = {
     bannerAvailable: 'GEODHA रिपोर्टिंग ऐप अब उपलब्ध है!',
     bannerGooglePlay: 'Google Play',
     bannerAppStore: 'App Store',
-    bannerDengue: 'मच्छरों से परेशान हैं? एक नए रिपोर्टिंग टूल के बीटा टेस्टर बनें।',
+    bannerDengue: 'मच्छरों से परेशान हैं? ARTPARK (IISc) के सहयोग से विकसित एक नए रिपोर्टिंग टूल के बीटा टेस्टर बनें।',
     bannerLink: 'जुड़ने के लिए यहां क्लिक करें',
 
     missionKicker: 'हमारा मिशन',

@@ -47,7 +47,7 @@ export const en = {
     bannerAvailable: 'The GEODHA reporting app is now available!',
     bannerGooglePlay: 'Google Play',
     bannerAppStore: 'App Store',
-    bannerDengue: 'Frustrated with mosquitos? Join as a beta tester for a new reporting tool.',
+    bannerDengue: 'Frustrated with mosquitos? Join as a beta tester for a new reporting tool developed in collaboration with ARTPARK (IISc).',
     bannerLink: 'Click here to join',
 
     missionKicker: 'Our mission',
